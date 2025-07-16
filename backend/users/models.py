@@ -3,7 +3,8 @@ from django.db import models
 
 
 LENGTH_DATA_USER = 150
-LENGTH_EMAIL = 150
+LENGTH_EMAIL = 254
+LIMITED_NUMBER_OF_CHARACTERS = f'Набор символов не более {LENGTH_DATA_USER}'
 
 
 # TODO: Сделать валидацию username
@@ -25,22 +26,29 @@ class User(AbstractUser):
         max_length=LENGTH_DATA_USER,
         blank=False,
         null=False,
+        # help_text=LIMITED_NUMBER_OF_CHARACTERS,
     )
     last_name = models.CharField(
         'Фамилия',
         max_length=LENGTH_DATA_USER,
         blank=False,
         null=False,
+        # help_text=LIMITED_NUMBER_OF_CHARACTERS,
     )
     email = models.EmailField(
         'Электронная почта',
-        max_length=LENGTH_EMAIL
+        max_length=LENGTH_EMAIL,
+        unique=True,
+        blank=False,
+        null=False,
+
     )
     password = models.CharField(
         'Пароль',
         max_length=LENGTH_DATA_USER,
         blank=False,
         null=False,
+        # help_text=LIMITED_NUMBER_OF_CHARACTERS,
     )
 
     class Meta:
