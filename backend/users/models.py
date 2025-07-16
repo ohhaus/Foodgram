@@ -6,6 +6,7 @@ LENGTH_DATA_USER = 150
 LENGTH_EMAIL = 150
 
 
+# TODO: Сделать валидацию username
 class User(AbstractUser):
     """Модель пользователя."""
 
