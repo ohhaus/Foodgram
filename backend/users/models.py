@@ -1,42 +1,51 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils.translation import gettext_lazy as _
+from django.core.validators import RegexValidator
 
-
-LENGTH_DATA_USER = 150
-LENGTH_EMAIL = 254
-LIMITED_NUMBER_OF_CHARACTERS = f'Набор символов не более {LENGTH_DATA_USER}'
+from .constants import (
+    USERNAME_VERBOSE_NAME,
+    FIRST_NAME_VERBOSE_NAME,
+    LAST_NAME_VERBOSE_NAME,
+    EMAIL_VERBOSE_NAME,
+    PASSWORD_VERBOSE_NAME,
+    LENGTH_DATA_USER,
+    LENGTH_EMAIL,
+    USERNAME_INVALID_CHARS_ERROR,
+)
 
 
 # TODO: Сделать валидацию username
 class User(AbstractUser):
     """Модель пользователя."""
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
-
     username = models.CharField(
-        'Уникальное имя пользователя',
+        USERNAME_VERBOSE_NAME,
         max_length=LENGTH_DATA_USER,
         unique=True,
         blank=False,
         null=False,
+        validators=(
+            RegexValidator(
+                regex=r'^[\w.-]+$',
+                message=USERNAME_INVALID_CHARS_ERROR
+            ),
+        )
     )
     first_name = models.CharField(
-        'Имя',
+        FIRST_NAME_VERBOSE_NAME,
         max_length=LENGTH_DATA_USER,
         blank=False,
         null=False,
-        # help_text=LIMITED_NUMBER_OF_CHARACTERS,
     )
     last_name = models.CharField(
-        'Фамилия',
+        LAST_NAME_VERBOSE_NAME,
         max_length=LENGTH_DATA_USER,
         blank=False,
         null=False,
-        # help_text=LIMITED_NUMBER_OF_CHARACTERS,
     )
     email = models.EmailField(
-        'Электронная почта',
+        EMAIL_VERBOSE_NAME,
         max_length=LENGTH_EMAIL,
         unique=True,
         blank=False,
@@ -44,20 +53,22 @@ class User(AbstractUser):
 
     )
     password = models.CharField(
-        'Пароль',
+        PASSWORD_VERBOSE_NAME,
         max_length=LENGTH_DATA_USER,
         blank=False,
         null=False,
-        # help_text=LIMITED_NUMBER_OF_CHARACTERS,
     )
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
     class Meta:
         ordering = ('username',)
-        verbose_name = 'Пользователь',
-        verbose_name_plural = 'Пользователи',
+        verbose_name = _('Пользователь'),
+        verbose_name_plural = _('Пользователи'),
 
     def __str__(self):
-        return f'{self.username} {self.email}'
+        return self.username
 
 
 class Follow(models.Model):
