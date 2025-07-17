@@ -9,6 +9,7 @@ from .constants import (
     LAST_NAME_VERBOSE_NAME,
     EMAIL_VERBOSE_NAME,
     PASSWORD_VERBOSE_NAME,
+    AVATAR_VERBOSE_NAME,
     LENGTH_DATA_USER,
     LENGTH_EMAIL,
     USERNAME_INVALID_CHARS_ERROR,
@@ -58,14 +59,20 @@ class User(AbstractUser):
         blank=False,
         null=False,
     )
+    avatar = models.ImageField(
+        AVATAR_VERBOSE_NAME,
+        upload_to='users/avatars/',
+        blank=True,
+        null=False,
+    )
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
     class Meta:
         ordering = ('username',)
-        verbose_name = _('Пользователь'),
-        verbose_name_plural = _('Пользователи'),
+        verbose_name = _('Пользователь')
+        verbose_name_plural = _('Пользователи')
 
     def __str__(self):
         return self.username
@@ -73,3 +80,34 @@ class User(AbstractUser):
 
 class Follow(models.Model):
     """Модель подписчика."""
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='follower',
+        verbose_name='Подписчик',
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='following',
+        verbose_name='Автор',
+    )
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        ordering = ('user',)
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'author'],
+                name='unique_follow',
+            ),
+            models.CheckConstraint(
+                check=~models.Q(author=models.F('user')),
+                name='no_self_follow'
+            )
+        ]
+
+        def __str__(self):
+            return f'Пользователь {self.user} подписан на {self.author}'
