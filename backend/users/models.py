@@ -16,7 +16,6 @@ from .constants import (
 )
 
 
-# TODO: Сделать валидацию username
 class User(AbstractUser):
     """Модель пользователя."""
 
@@ -51,7 +50,6 @@ class User(AbstractUser):
         unique=True,
         blank=False,
         null=False,
-
     )
     password = models.CharField(
         PASSWORD_VERBOSE_NAME,
@@ -109,5 +107,5 @@ class Follow(models.Model):
             )
         ]
 
-        def __str__(self):
-            return f'Пользователь {self.user} подписан на {self.author}'
+    def __str__(self):
+        return f'Пользователь {self.user} подписан на {self.author}'
