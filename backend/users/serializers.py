@@ -3,7 +3,7 @@ from rest_framework import serializers
 from users.models import User
 
 
-class UsersSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     """Сериализатор для всех пользователей."""
     is_subscribed = serializers.SerializerMethodField(read_only=True)
 
@@ -18,10 +18,10 @@ class UsersSerializer(serializers.ModelSerializer):
                 and request.user.follower.filter(author=author).exists())
 
 
-class FollowSerializer(UsersSerializer):
+class FollowSerializer(UserSerializer):
     recipes = serializers.SerializerMethodField(read_only=True)
     recipes_count = serializers.SerializerMethodField(read_only=True)
 
-    class Meta(UsersSerializer.Meta):
-        fields = UsersSerializer.Meta.fields + ('recipes', 'recipes_count',)
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + ('recipes', 'recipes_count',)
         read_only_fields = ('email', 'username', 'last_name', 'first_name',)

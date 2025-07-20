@@ -126,7 +126,7 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'HIDE_USER': 'True',
     'SERIALIZERS': {
-        'current_user': 'users.serializers.UsersSerializer',
+        'current_user': 'users.serializers.UserSerializer',
     },
     'PERMISSIONS': {
         'user': ['djoser.permissions.CurrentUserOrAdminOrReadOnly'],
