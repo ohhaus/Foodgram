@@ -18,6 +18,10 @@ class Ingredient(NameModel):
         verbose_name = _('Ингредиент')
         verbose_name_plural = _('Ингредиенты')
         ordering = ('name',)
+        constraints = (
+            models.UniqueConstraint(
+                fields=['name', 'mesurement_unit'], name='unique_ingredient')
+        )
 
 
 class Tag(NameModel):
