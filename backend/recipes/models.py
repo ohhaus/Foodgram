@@ -59,7 +59,11 @@ class RecipeModel(NameModel):
         _('Изображние рецепта'),
         upload_to='recipes/',
     )
-    # cooking_time
+    cooking_time = models.PositiveSmallIntegerField(
+        _('Время приготовления в минутах'),
+        default=1,
+        validators=(validators.MinValueValidator(1),)
+    )
     # ingredients
     tags = models.ManyToManyField(
         Tag,
