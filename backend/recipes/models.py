@@ -45,7 +45,7 @@ class Tag(NameModel):
         ordering = ('name',)
 
 
-class RecipeModel(NameModel):
+class Recipe(NameModel):
     author = models.ForeignKey(
         User,
         verbose_name=_('Автор рецепта'),
@@ -64,7 +64,11 @@ class RecipeModel(NameModel):
         default=1,
         validators=(validators.MinValueValidator(1),)
     )
-    # ingredients
+    ingredients = models.ManyToManyField(
+        Ingredient,
+        through='RecipeIngredient',
+        verbose_name=_('Ингредиенты')
+    )
     tags = models.ManyToManyField(
         Tag,
         verbose_name=_('Теги'),
@@ -85,4 +89,41 @@ class RecipeModel(NameModel):
                 fields=('name', 'author'),
                 name='unique_for_author',
             ),
+        )
+
+
+class RecipeIngredient(models.Model):
+    """Модель ингредиентов в рецепте."""
+
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        verbose_name=_('Рецепт'),
+    )
+    ingredient = models.ForeignKey(
+        Ingredient,
+        on_delete=models.CASCADE,
+        verbose_name=_('Ингредиент'),
+    )
+    amount = models.PositiveSmallIntegerField(
+        _('Количество'),
+        default=1,
+        validators=(validators.MinValueValidator(1),)
+    )
+
+    class Meta:
+        ordering = ('-id',)
+        verbose_name = _('Количество ингредиентов')
+        verbose_name_plural = _('Количество ингредиентов')
+        constraints = (
+            models.UniqueConstraint(
+                fields=['ingredient', 'recipe'],
+                name='unique_ingredient_recipe',
+            ),
+        )
+
+    def __str__(self):
+        return (
+            f'{self.ingredient.name} - '
+            f'{self.amount} {self.ingredient.mesurement_unit}'
         )
