@@ -100,7 +100,7 @@ class Recipe(NameModel):
         constraints = (
             models.UniqueConstraint(
                 fields=('name', 'author'),
-                name='unique_for_author',
+                name='unique_name_author',
             ),
         )
 
@@ -130,13 +130,65 @@ class RecipeIngredient(models.Model):
         verbose_name_plural = _('Количество ингредиентов')
         constraints = (
             models.UniqueConstraint(
-                fields=['ingredient', 'recipe'],
-                name='unique_ingredient_recipe',
+                fields=('recipe', 'ingredient'),
+                name='unique_recipe_ingredient',
             ),
         )
 
     def __str__(self):
         return (
             f'{self.ingredient.name} - '
-            f'{self.amount} {self.ingredient.mesurement_unit}'
+            f'{self.amount} {self.ingredient.measurement_unit}'
+        )
+
+
+class FavoriteShoppingCart(models.Model):
+    """Асбстрактная модель добавляющая пользователя и рецепт"""
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name=_('Пользователь'),
+        null=True,
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        verbose_name=_('Рецепт'),
+    )
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return f'{self.user} - {self.recipe}'
+
+
+class ShoppingCart(FavoriteShoppingCart):
+    """Модель списка покупок."""
+
+    class Meta(FavoriteShoppingCart.Meta):
+        verbose_name = _('Список покупок')
+        verbose_name_plural = _('Списки покупок')
+        default_related_name = 'shopping_cart'
+        constraints = (
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name='unique_user_recipe',
+            )
+        )
+
+
+class Favorite(FavoriteShoppingCart):
+    """Модель избранного."""
+
+    class Meta(FavoriteShoppingCart.Meta):
+        verbose_name = _('Избранный рецепт')
+        verbose_name_plural = _('Избранные рецепты')
+        default_related_name = 'favorites'
+        constraints = (
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name='unique_shopping_cart',
+            )
         )
