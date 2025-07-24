@@ -5,10 +5,12 @@ from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
 
 from users.views import UserViewSet
+from recipes.views import IngredientViewSet
 
 
 router = DefaultRouter()
 router.register('users', UserViewSet, basename='users')
+router.register('ingredients', IngredientViewSet, basename='ingredients')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

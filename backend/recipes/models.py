@@ -1,5 +1,5 @@
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.core import validators
 
 from users.models import User
@@ -170,7 +170,7 @@ class ShoppingCart(FavoriteShoppingCart):
     class Meta(FavoriteShoppingCart.Meta):
         verbose_name = _('Список покупок')
         verbose_name_plural = _('Списки покупок')
-        default_related_name = 'shopping_cart'
+        default_related_name = 'shopping_list'
         constraints = (
             models.UniqueConstraint(
                 fields=('user', 'recipe'),
