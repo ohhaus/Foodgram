@@ -9,9 +9,21 @@ from core.models import NameModel
 class Ingredient(NameModel):
     """Модель ингредиента."""
 
-    mesurement_unit = models.CharField(
+    class MeasurementUnit(models.TextChoices):
+        GRAM = 'г', 'Грамм'
+        KILOGRAM = 'кг', 'Килограмм'
+        MILLILITER = 'мл', 'Миллилитр'
+        LITER = 'л', 'Литр'
+        PIECE = 'шт', 'Штука'
+        TEASPOON = 'ч. л', 'Чайная ложка'
+        TABLESPOON = 'ст. л', 'Столовая ложка'
+
+    measurement_unit = models.CharField(
         _('Единица измерения'),
-        max_length=150,
+        choices=MeasurementUnit.choices,
+        max_length=15,
+        blank=False,
+        null=False,
     )
 
     class Meta(NameModel.Meta):
@@ -35,6 +47,7 @@ class Tag(NameModel):
     slug = models.SlugField(
         _('Уникальный слаг'),
         max_length=150,
+        unique=True,
         validators=(validators.validate_slug,)
     )
 
