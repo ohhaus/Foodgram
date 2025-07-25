@@ -1,6 +1,7 @@
-from rest_framework import serializers
+from rest_framework import serializers, exceptions, status
 
-from users.models import User
+from users.models import User, Follow
+from recipes.serializers import ShowRecipeAddedSerializer
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -25,3 +26,35 @@ class FollowSerializer(UserSerializer):
     class Meta(UserSerializer.Meta):
         fields = UserSerializer.Meta.fields + ('recipes', 'recipes_count',)
         read_only_fields = ('email', 'username', 'last_name', 'first_name',)
+
+    def validate(self, data):
+        author = self.instance
+        user = self.context.get('request').user
+        if Follow.objects.filter(user=user, author=author).exists():
+            raise exceptions.ValidationError(
+                detail='',
+                code=status.HTTP_400_BAD_REQUEST,
+            )
+        if user == author:
+            raise exceptions.ValidationError(
+                detail='',
+                code=status.HTTP_400_BAD_REQUEST
+            )
+        return data
+
+    def get_recipes_count(self, obj):
+        return obj.recipes.count()
+
+    def get_recipes(self, obj):
+        request = self.context.get('request')
+        limit = request.GET.get('recipes_limit')
+        recipes = obj.recipes.all()
+        if limit:
+            recipes = recipes[:int(limit)]
+        serializer = ShowRecipeAddedSerializer(
+            recipes,
+            many=True,
+            read_only=True,
+        )
+
+        return serializer.data

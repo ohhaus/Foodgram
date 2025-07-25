@@ -132,3 +132,6 @@ DJOSER = {
         'user': ['djoser.permissions.CurrentUserOrAdminOrReadOnly'],
     },
 }
+
+# Константы
+RECIPE_NAME_LENGTH = 256

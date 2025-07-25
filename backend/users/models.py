@@ -27,7 +27,7 @@ class User(AbstractUser):
         null=False,
         validators=(
             RegexValidator(
-                regex=r'^[\w.-]+$',
+                regex=r'^[\w.@+-]+\Z',
                 message=USERNAME_INVALID_CHARS_ERROR
             ),
         )
