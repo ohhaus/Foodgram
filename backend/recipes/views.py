@@ -1,17 +1,22 @@
 from urllib.parse import unquote
 
+from django.db.models import Sum
 from rest_framework import filters, permissions, viewsets
 from rest_framework.decorators import action
 
+from core.filters import RecipeFilter
 from core.pagination import LimitPageNumberPagination
 from core.permissions import AuthorOrReadOnly
-from core.filters import RecipeFilter
-from recipes.models import Ingredient, Recipe, Tag
+from core.utils import handle_add_or_remove_recipe, delete_recipe_image, generate_shopping_list_file
+from recipes.models import Ingredient, Recipe, Tag, Favorite, ShoppingCart, RecipeIngredient
 from recipes.serializers import (
     IngredientSerializer,
     RecipeSerializer,
     RecipeWriteSerializer,
     TagSerializer,
+    AddFavoriteRecipeSerializer,
+    AddShopingListRecipeSerializer,
+    RecipeIngredientSerializer
 )
 
 
@@ -70,3 +75,32 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def favorite(self, request, pk):
         """Добавляем/удаляем рецепты из избранного."""
+        return handle_add_or_remove_recipe(
+            AddFavoriteRecipeSerializer, Favorite, request, pk
+        )
+
+    @action(
+        detail=True,
+        methods=['POST', 'DELETE'],
+        permission_classes=(permissions.IsAuthenticated)
+    )
+    def shopping_cart(self, request, pk):
+        """Добавляем/удаляем рецепты из списка покупок."""
+        return handle_add_or_remove_recipe(
+            AddShopingListRecipeSerializer, ShoppingCart, request, pk
+        )
+
+    @action(
+        detail=True,
+        methods=['GET'],
+        permission_classes=(permissions.IsAuthenticated,)
+    )
+    def download_shopping_cart(self, request):
+        ingredients = RecipeIngredient.objects.filter(
+            recipe__shopping_list__user=request.user
+        ).values(
+            'ingredient__name',
+            'ingredient__measurement_unit'
+        ).annotate(amount=Sum('amount')).order_by('ingredient__name')
+
+        return generate_shopping_list_file(request.user, ingredients)

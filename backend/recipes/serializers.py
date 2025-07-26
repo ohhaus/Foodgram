@@ -91,14 +91,6 @@ class RecipeSerializer(serializers.ModelSerializer):
             'cooking_time',
         )
 
-    def get_ingredients(self, recipe):
-        return recipe.ingredients.values(
-            'id',
-            'name',
-            'measurement_unit',
-            amount=models.F('recipes__ingredient_list'),
-        )
-
     def get_is_favorited(self, obj):
         request = self.context.get('request')
         return (
@@ -122,7 +114,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True
     )
-    ingredients = RecipeIngredientSerializer(many=True)
+    ingredients = RecipeIngredientWriteSerializer(many=True, write_only=True)
     image = Base64ImageField()
 
     class Meta:
@@ -145,7 +137,12 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags)
         for ingredient_data in ingredients_data:
-            RecipeIngredient.objects.create(recipe=recipe, **ingredient_data)
+            ingredient = ingredient_data.pop('id')
+            RecipeIngredient.objects.create(
+                recipe=recipe,
+                ingredient=ingredient,
+                amount=ingredient_data['amount']
+            )
         return recipe
 
     @transaction.atomic
@@ -153,8 +150,14 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         tags = validated_data.pop('tags')
         ingredients_data = validated_data.pop('ingredients')
         instance.tags.set(tags)
+        instance.recipeingredient_set.all().delete()
         for ingredient_data in ingredients_data:
-            RecipeIngredient.objects.create(recipe=instance, **ingredient_data)
+            ingredient = ingredient_data.pop('id')
+            RecipeIngredient.objects.create(
+                recipe=instance,
+                ingredient=ingredient,
+                amount=ingredient_data['amount']
+            )
         return super().update(instance, validated_data)
 
     def validate_cooking_time(self, data):
@@ -208,7 +211,7 @@ class AddFavoriteRecipeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Favorite
-        fields = ('user', 'recipe')
+        fields = ('recipe',)
         validators = [
             UniqueTogetherValidator(
                 queryset=Favorite.objects.all(),
@@ -217,6 +220,21 @@ class AddFavoriteRecipeSerializer(serializers.ModelSerializer):
             )
         ]
 
+    def validate(self, data):
+        """Проверка существования рецепта и авторизации."""
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            raise serializers.ValidationError("Авторизация обязательна!")
+        recipe = data.get('recipe')
+        if not Recipe.objects.filter(id=recipe.id).exists():
+            raise serializers.ValidationError("Рецепт не найден!")
+        return data
+
+    def save(self, **kwargs):
+        """Сохранение с текущим пользователем."""
+        kwargs['user'] = self.context['request'].user
+        return super().save(**kwargs)
+
     def to_representation(self, instance):
         request = self.context.get('request')
         return ShowRecipeAddedSerializer(
@@ -224,7 +242,7 @@ class AddFavoriteRecipeSerializer(serializers.ModelSerializer):
         )
 
 
-class AddShopingListRecipeSerializer(AddFavoriteRecipeSerializer):
+class AddShoppingListRecipeSerializer(AddFavoriteRecipeSerializer):
     """Сериализатор добавления рецептов в список покупок."""
 
     class Meta(AddFavoriteRecipeSerializer.Meta):

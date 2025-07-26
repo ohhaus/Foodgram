@@ -1,14 +1,13 @@
 from django.db import models
-from django.utils.translation import gettext_lazy as _
 
 
 class NameModel(models.Model):
     """Абстрактная модель добавляющая название."""
 
     name = models.CharField(
-        _('Название'),
+        'Название',
         unique=True,
-        max_length=200,  # Default max_length, will be overridden in child models
+        max_length=200,
     )
 
     class Meta:
@@ -24,13 +23,13 @@ class FavoriteShoppingCart(models.Model):
     user = models.ForeignKey(
         'users.User',
         on_delete=models.CASCADE,
-        verbose_name=_('Пользователь'),
+        verbose_name='Пользователь',
         null=True,
     )
     recipe = models.ForeignKey(
         'recipes.Recipe',
         on_delete=models.CASCADE,
-        verbose_name=_('Рецепт'),
+        verbose_name='Рецепт',
     )
 
     class Meta:
