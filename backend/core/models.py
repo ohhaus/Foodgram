@@ -1,9 +1,8 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from recipes.models import Recipe
-from recipes.models import User
+from recipes.models import Recipe, User
 
 
 class NameModel(models.Model):

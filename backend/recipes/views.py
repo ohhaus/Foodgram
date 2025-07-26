@@ -1,17 +1,17 @@
 from urllib.parse import unquote
-from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, permissions, filters, status, response
+
+from rest_framework import filters, permissions, viewsets
 from rest_framework.decorators import action
 
-from recipes.models import Tag, Recipe, Ingredient
+from core.pagination import LimitPageNumberPagination
+from core.permissions import AuthorOrReadOnly
+from recipes.models import Ingredient, Recipe, Tag
 from recipes.serializers import (
-    TagSerializer,
     IngredientSerializer,
     RecipeSerializer,
-    RecipeWriteSerializer
+    RecipeWriteSerializer,
+    TagSerializer,
 )
-from core.permissions import AuthorOrReadOnly
-from core.pagination import LimitPageNumberPagination
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -36,10 +36,7 @@ class IngredientViewSet(viewsets.ModelViewSet):
         name = self.request.query_params.get('name')
         queryset = self.queryset
         if name:
-            if name[0] == '%':
-                name = unquote(name)
-            else:
-                name = name.translate('')
+            name = unquote(name) if name[0] == '%' else name.translate('')
             name = name.lower()
             start_queryset = list(queryset.filter(name__isstartwith=name))
             ingredients_set = set(start_queryset)
@@ -65,6 +62,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeWriteSerializer
         return RecipeSerializer
 
-    @action(detail=True, methods=['POST', 'DELETE'], permission_classes=(permissions.IsAuthenticated,))
+    @action(
+        detail=True,
+        methods=['POST', 'DELETE'],
+        permission_classes=(permissions.IsAuthenticated,),
+    )
     def favorite(self, request, pk):
         """Добавляем/удаляем рецепты из избранного."""

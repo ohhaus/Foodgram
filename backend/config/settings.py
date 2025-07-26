@@ -1,12 +1,16 @@
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-3!b-39e%$a5u^6feutvy3bp*pfjc@l*i5mc+shmw%z^i#n$b4z')
+SECRET_KEY = os.getenv(
+    'SECRET_KEY',
+    'django-insecure-3!b-39e%$a5u^6feutvy3bp*pfjc@l*i5mc+shmw%z^i#n$b4z',
+)
 
 DEBUG = True
 
@@ -24,7 +28,7 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     'rest_framework',
     'django_filters',
-    'djoser'
+    'djoser',
 ]
 
 LOCAL_APPS = [
@@ -117,8 +121,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
-    'DEFAULT_PAGINATION_CLASS':
-        'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 6,
 }
 

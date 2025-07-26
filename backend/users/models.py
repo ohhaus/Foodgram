@@ -1,18 +1,18 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.core.validators import RegexValidator
 
 from .constants import (
-    USERNAME_VERBOSE_NAME,
+    AVATAR_VERBOSE_NAME,
+    EMAIL_VERBOSE_NAME,
     FIRST_NAME_VERBOSE_NAME,
     LAST_NAME_VERBOSE_NAME,
-    EMAIL_VERBOSE_NAME,
-    PASSWORD_VERBOSE_NAME,
-    AVATAR_VERBOSE_NAME,
     LENGTH_DATA_USER,
     LENGTH_EMAIL,
+    PASSWORD_VERBOSE_NAME,
     USERNAME_INVALID_CHARS_ERROR,
+    USERNAME_VERBOSE_NAME,
 )
 
 
@@ -27,10 +27,9 @@ class User(AbstractUser):
         null=False,
         validators=(
             RegexValidator(
-                regex=r'^[\w.@+-]+\Z',
-                message=USERNAME_INVALID_CHARS_ERROR
+                regex=r'^[\w.@+-]+\Z', message=USERNAME_INVALID_CHARS_ERROR
             ),
-        )
+        ),
     )
     first_name = models.CharField(
         FIRST_NAME_VERBOSE_NAME,
@@ -102,9 +101,8 @@ class Follow(models.Model):
                 name='unique_follow',
             ),
             models.CheckConstraint(
-                check=~models.Q(author=models.F('user')),
-                name='no_self_follow'
-            )
+                check=~models.Q(author=models.F('user')), name='no_self_follow'
+            ),
         ]
 
     def __str__(self):

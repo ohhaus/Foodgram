@@ -1,9 +1,9 @@
+from django.core import validators
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.core import validators
 
+from core.models import FavoriteShoppingCart, NameModel
 from users.models import User
-from core.models import NameModel, FavoriteShoppingCart
 
 
 class Ingredient(NameModel):
@@ -30,9 +30,8 @@ class Ingredient(NameModel):
         verbose_name = _('Ингредиент')
         verbose_name_plural = _('Ингредиенты')
         ordering = ('name',)
-        constraints = (
-            models.UniqueConstraint(
-                fields=['name', 'mesurement_unit'], name='unique_ingredient')
+        constraints = models.UniqueConstraint(
+            fields=['name', 'mesurement_unit'], name='unique_ingredient'
         )
 
 
@@ -48,7 +47,7 @@ class Tag(NameModel):
         _('Уникальный слаг'),
         max_length=150,
         unique=True,
-        validators=(validators.validate_slug,)
+        validators=(validators.validate_slug,),
     )
 
     class Meta(NameModel.Meta):
@@ -75,12 +74,10 @@ class Recipe(NameModel):
     cooking_time = models.PositiveSmallIntegerField(
         _('Время приготовления в минутах'),
         default=1,
-        validators=(validators.MinValueValidator(1),)
+        validators=(validators.MinValueValidator(1),),
     )
     ingredients = models.ManyToManyField(
-        Ingredient,
-        through='RecipeIngredient',
-        verbose_name=_('Ингредиенты')
+        Ingredient, through='RecipeIngredient', verbose_name=_('Ингредиенты')
     )
     tags = models.ManyToManyField(
         Tag,
@@ -121,7 +118,7 @@ class RecipeIngredient(models.Model):
     amount = models.PositiveSmallIntegerField(
         _('Количество'),
         default=1,
-        validators=(validators.MinValueValidator(1),)
+        validators=(validators.MinValueValidator(1),),
     )
 
     class Meta:
@@ -149,11 +146,9 @@ class ShoppingCart(FavoriteShoppingCart):
         verbose_name = _('Список покупок')
         verbose_name_plural = _('Списки покупок')
         default_related_name = 'shopping_list'
-        constraints = (
-            models.UniqueConstraint(
-                fields=('user', 'recipe'),
-                name='unique_user_recipe',
-            )
+        constraints = models.UniqueConstraint(
+            fields=('user', 'recipe'),
+            name='unique_user_recipe',
         )
 
 
@@ -164,9 +159,7 @@ class Favorite(FavoriteShoppingCart):
         verbose_name = _('Избранный рецепт')
         verbose_name_plural = _('Избранные рецепты')
         default_related_name = 'favorites'
-        constraints = (
-            models.UniqueConstraint(
-                fields=('user', 'recipe'),
-                name='unique_shopping_cart',
-            )
+        constraints = models.UniqueConstraint(
+            fields=('user', 'recipe'),
+            name='unique_shopping_cart',
         )
