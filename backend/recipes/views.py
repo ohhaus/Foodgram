@@ -5,6 +5,7 @@ from rest_framework.decorators import action
 
 from core.pagination import LimitPageNumberPagination
 from core.permissions import AuthorOrReadOnly
+from core.filters import RecipeFilter
 from recipes.models import Ingredient, Recipe, Tag
 from recipes.serializers import (
     IngredientSerializer,
@@ -54,7 +55,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     permission_classes = (AuthorOrReadOnly,)
     serializer_class = RecipeSerializer
-    filterset_class = None
+    filterset_class = RecipeFilter
     pagination_class = LimitPageNumberPagination
 
     def get_serializer_class(self):

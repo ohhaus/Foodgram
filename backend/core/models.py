@@ -1,8 +1,5 @@
-from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-
-from recipes.models import Recipe, User
 
 
 class NameModel(models.Model):
@@ -11,7 +8,7 @@ class NameModel(models.Model):
     name = models.CharField(
         _('Название'),
         unique=True,
-        max_length=settings.RECIPE_NAME_LENGTH,
+        max_length=200,  # Default max_length, will be overridden in child models
     )
 
     class Meta:
@@ -25,13 +22,13 @@ class FavoriteShoppingCart(models.Model):
     """Асбстрактная модель добавляющая пользователя и рецепт"""
 
     user = models.ForeignKey(
-        User,
+        'users.User',
         on_delete=models.CASCADE,
         verbose_name=_('Пользователь'),
         null=True,
     )
     recipe = models.ForeignKey(
-        Recipe,
+        'recipes.Recipe',
         on_delete=models.CASCADE,
         verbose_name=_('Рецепт'),
     )

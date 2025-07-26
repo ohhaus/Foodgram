@@ -1,6 +1,6 @@
 from rest_framework import exceptions, serializers, status
 
-from recipes.serializers import ShowRecipeAddedSerializer
+from core.serializers import ShowRecipeAddedSerializer
 from users.models import Follow, User
 
 
