@@ -1,0 +1,70 @@
+# Основные настройки
+line-length = 79
+target-version = "py311"
+
+# Исключаемые директории и файлы
+exclude = [
+    "migrations",
+    "venv",
+    ".venv",
+    "env",
+    ".env",
+    "__pycache__",
+    ".git",
+    "staticfiles",
+    "media",
+]
+
+# Настройки линтинга
+[lint]
+# Выбор правил для проверки
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "Q",   # flake8-quotes
+    "SIM", # flake8-simplify
+]
+
+# Игнорируемые правила
+ignore = [
+    "E501", # line too long (handled by formatter)
+    "B008", # do not perform function calls in argument defaults
+    "RUF001",
+    "RUF012",
+]
+
+# Настройки для конкретных файлов
+[lint.per-file-ignores]
+"config/settings*.py" = ["F405", "F403"]
+"**/migrations/*.py" = ["E501", "F401", "F811"]
+"manage.py" = ["T201"]
+
+# Настройки isort для Django
+[lint.isort]
+known-first-party = ["config", "core", "users", "recipes"]
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "first-party",
+    "local-folder",
+]
+split-on-trailing-comma = true
+
+# Настройки для flake8-quotes
+[lint.flake8-quotes]
+inline-quotes = "single"
+multiline-quotes = "double"
+docstring-quotes = "double"
+avoid-escape = true
+
+# Настройки форматирования
+[format]
+quote-style = "single"
+indent-style = "space"
+line-ending = "auto"
