@@ -49,7 +49,7 @@ class User(AbstractUser):
         settings.AVATAR_VERBOSE_NAME,
         upload_to=settings.USERS_AVATARS_UPLOAD_PATH,
         blank=True,
-        null=False,
+        null=True,
     )
 
     USERNAME_FIELD = 'email'

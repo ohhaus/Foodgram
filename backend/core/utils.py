@@ -17,7 +17,9 @@ def handle_add_or_remove_recipe(serializer_class, model, request, recipe_id):
     recipe = get_object_or_404(Recipe, id=recipe_id)
 
     if request.method == 'POST':
-        serializer = serializer_class(data={'recipe': recipe.id}, context={'request': request})
+        serializer = serializer_class(
+            data={'recipe': recipe.id}, context={'request': request}
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)

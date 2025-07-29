@@ -8,6 +8,7 @@ class UserSerializer(serializers.ModelSerializer):
     """Сериализатор для всех пользователей."""
 
     is_subscribed = serializers.SerializerMethodField(read_only=True)
+    password = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = User
@@ -18,6 +19,7 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'is_subscribed',
+            'password',
         )
 
     def get_is_subscribed(self, author):
@@ -29,7 +31,24 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
 
+class UserAvatarSerializer(serializers.ModelSerializer):
+    """Сериализатор для управления аватаром пользователя."""
+
+    avatar = serializers.ImageField(required=False)
+
+    class Meta:
+        model = User
+        fields = ('avatar',)
+
+    def update(self, instance, validated_data):
+        instance.avatar = validated_data.get('avatar', instance.avatar)
+        instance.save()
+        return instance
+
+
 class FollowSerializer(UserSerializer):
+    """Сериализатор подписки."""
+
     recipes = serializers.SerializerMethodField(read_only=True)
     recipes_count = serializers.SerializerMethodField(read_only=True)
 

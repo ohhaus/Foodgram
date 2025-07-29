@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -12,9 +13,9 @@ SECRET_KEY = os.getenv(
     'django-insecure-3!b-39e%$a5u^6feutvy3bp*pfjc@l*i5mc+shmw%z^i#n$b4z',
 )
 
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 DJANGO_APPS = [
     'django.contrib.admin',
@@ -71,12 +72,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if 'test' in sys.argv or os.getenv('USE_SQLITE', 'False').lower() == 'true':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3'
+            if 'test' not in sys.argv
+            else ':memory:',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME', 'foodgram'),
+            'USER': os.getenv('DB_USER', 'foodgram_user'),
+            'PASSWORD': os.getenv('DB_PASSWORD', 'password'),
+            'HOST': os.getenv('DB_HOST', 'db'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+        }
+    }
 
 AUTH_USER_MODEL = 'users.User'
 
@@ -111,8 +126,14 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-CORS_ORIGIN_ALLOW_ALL = True
-CORS_URLS_REGEX = r'^/api/.*$'
+CORS_ALLOW_ALL_ORIGINS = (
+    os.getenv('CORS_ALLOW_ALL_ORIGINS', 'True').lower() == 'true'
+)
+CORS_ALLOWED_ORIGINS = (
+    os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
+    if os.getenv('CORS_ALLOWED_ORIGINS')
+    else []
+)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -132,7 +153,7 @@ REST_FRAMEWORK = {
 
 DJOSER = {
     'LOGIN_FIELD': 'email',
-    'HIDE_USER': 'True',
+    'HIDE_USERS': 'True',
     'SERIALIZERS': {
         'current_user': 'users.serializers.UserSerializer',
     },
@@ -144,6 +165,8 @@ DJOSER = {
 # ================================
 # КОНСТАНТЫ ПРОЕКТА
 # ================================
+
+DEFAULT_PAGE_SIZE = 6
 
 # Константы для длин полей
 LENGTH_DATA_USER = 150
@@ -212,10 +235,12 @@ INGREDIENT_AMOUNT_MIN_ERROR = (
     f'Количество ингредиента должно быть больше {MIN_INGREDIENT_AMOUNT}!'
 )
 
+RECIPE_NOT_FOUND = 'Рецепт не найден!'
 INGREDIENTS_REQUIRED_ERROR = 'Должен быть хотя бы один ингредиент!'
 TAGS_REQUIRED_ERROR = 'Должен быть хотя бы один тег!'
 DUPLICATE_INGREDIENTS_ERROR = 'Ингредиенты не должны повторяться!'
 DUPLICATE_TAGS_ERROR = 'Теги не должны повторяться!'
+AUTHORIZATION_REQUIRED = 'Авторизация обязательна!'
 
 # Константы для сообщений о дублировании в базе данных
 FAVORITE_ALREADY_EXISTS_ERROR = 'Рецепт уже добавлен в избранное!'

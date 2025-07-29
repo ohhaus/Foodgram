@@ -1,10 +1,15 @@
 from django.conf import settings
-from django.db import models, transaction
+from django.db import transaction
 from drf_extra_fields.fields import Base64ImageField
-from rest_framework import exceptions, serializers
+from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
 from core.serializers import ShowRecipeAddedSerializer
+from core.validators import (
+    validate_cooking_time,
+    validate_ingredients,
+    validate_tags,
+)
 from recipes.models import (
     Favorite,
     Ingredient,
@@ -141,7 +146,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             RecipeIngredient.objects.create(
                 recipe=recipe,
                 ingredient=ingredient,
-                amount=ingredient_data['amount']
+                amount=ingredient_data['amount'],
             )
         return recipe
 
@@ -156,49 +161,18 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             RecipeIngredient.objects.create(
                 recipe=instance,
                 ingredient=ingredient,
-                amount=ingredient_data['amount']
+                amount=ingredient_data['amount'],
             )
         return super().update(instance, validated_data)
 
     def validate_cooking_time(self, data):
-        cooking_time = self.initial_data.get('cooking_time')
-        if int(cooking_time) <= 0:
-            raise serializers.ValidationError(settings.COOKING_TIME_MIN_ERROR)
-        return data
+        return validate_cooking_time(self.initial_data.get('cooking_time'))
 
     def validate_ingredients(self, data):
-        ingredients = self.initial_data.get('ingredients')
-        if len(ingredients) <= 0:
-            raise exceptions.ValidationError(
-                {'ingredients': settings.INGREDIENT_AMOUNT_MIN_ERROR}
-            )
-        ingredients_list = []
-        for item in ingredients:
-            if item['id'] in ingredients_list:
-                raise exceptions.ValidationError(
-                    {'ingredients': settings.DUPLICATE_INGREDIENTS_ERROR}
-                )
-            ingredients_list.append(item['id'])
-            if int(item['amount']) <= 0:
-                raise exceptions.ValidationError(
-                    {'amount': settings.INGREDIENT_AMOUNT_MIN_ERROR}
-                )
-        return data
+        return validate_ingredients(self.initial_data.get('ingredients'))
 
     def validate_tags(self, data):
-        tags = data
-        if not tags:
-            raise exceptions.ValidationError(
-                {'tags': settings.TAGS_REQUIRED_ERROR}
-            )
-        tags_list = []
-        for tag in tags:
-            if tag in tags_list:
-                raise exceptions.ValidationError(
-                    {'tags': settings.DUPLICATE_TAGS_ERROR}
-                )
-            tags_list.append(tag)
-        return data
+        return validate_tags(data)
 
     def to_representation(self, instance):
         request = self.context.get('request')
@@ -224,10 +198,10 @@ class AddFavoriteRecipeSerializer(serializers.ModelSerializer):
         """Проверка существования рецепта и авторизации."""
         request = self.context.get('request')
         if not request or not request.user.is_authenticated:
-            raise serializers.ValidationError("Авторизация обязательна!")
+            raise serializers.ValidationError(settings.AUTHORIZATION_REQUIRED)
         recipe = data.get('recipe')
         if not Recipe.objects.filter(id=recipe.id).exists():
-            raise serializers.ValidationError("Рецепт не найден!")
+            raise serializers.ValidationError(settings.RECIPE_NOT_FOUND)
         return data
 
     def save(self, **kwargs):

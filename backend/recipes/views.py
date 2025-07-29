@@ -3,20 +3,31 @@ from urllib.parse import unquote
 from django.db.models import Sum
 from rest_framework import filters, permissions, viewsets
 from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from core.filters import RecipeFilter
 from core.pagination import LimitPageNumberPagination
 from core.permissions import AuthorOrReadOnly
-from core.utils import handle_add_or_remove_recipe, delete_recipe_image, generate_shopping_list_file
-from recipes.models import Ingredient, Recipe, Tag, Favorite, ShoppingCart, RecipeIngredient
+from core.serializers import ShortLinkSerialzier
+from core.utils import (
+    generate_shopping_list_file,
+    handle_add_or_remove_recipe,
+)
+from recipes.models import (
+    Favorite,
+    Ingredient,
+    Recipe,
+    RecipeIngredient,
+    ShoppingCart,
+    Tag,
+)
 from recipes.serializers import (
+    AddFavoriteRecipeSerializer,
+    AddShoppingListRecipeSerializer,
     IngredientSerializer,
     RecipeSerializer,
     RecipeWriteSerializer,
     TagSerializer,
-    AddFavoriteRecipeSerializer,
-    AddShopingListRecipeSerializer,
-    RecipeIngredientSerializer
 )
 
 
@@ -82,25 +93,37 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(
         detail=True,
         methods=['POST', 'DELETE'],
-        permission_classes=(permissions.IsAuthenticated)
+        permission_classes=(permissions.IsAuthenticated),
     )
     def shopping_cart(self, request, pk):
         """Добавляем/удаляем рецепты из списка покупок."""
         return handle_add_or_remove_recipe(
-            AddShopingListRecipeSerializer, ShoppingCart, request, pk
+            AddShoppingListRecipeSerializer, ShoppingCart, request, pk
         )
 
     @action(
         detail=True,
         methods=['GET'],
-        permission_classes=(permissions.IsAuthenticated,)
+        permission_classes=(permissions.IsAuthenticated,),
     )
     def download_shopping_cart(self, request):
-        ingredients = RecipeIngredient.objects.filter(
-            recipe__shopping_list__user=request.user
-        ).values(
-            'ingredient__name',
-            'ingredient__measurement_unit'
-        ).annotate(amount=Sum('amount')).order_by('ingredient__name')
+        ingredients = (
+            RecipeIngredient.objects.filter(
+                recipe__shopping_list__user=request.user
+            )
+            .values('ingredient__name', 'ingredient__measurement_unit')
+            .annotate(amount=Sum('amount'))
+            .order_by('ingredient__name')
+        )
 
         return generate_shopping_list_file(request.user, ingredients)
+
+    @action(
+        detail=True,
+        methods=['GET'],
+        permission_classes=(permissions.IsAuthenticated,),
+    )
+    def get_link(self, request, pk):
+        recipe = self.get_object()
+        serializer = ShortLinkSerialzier(recipe, context={'request': request})
+        return Response(serializer.data)
