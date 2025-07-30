@@ -5,6 +5,7 @@ from rest_framework import permissions, response, status
 from rest_framework.decorators import action
 
 from core.pagination import LimitPageNumberPagination
+from core.permissions import AuthorOrReadOnly
 from users.models import Follow, User
 from users.serializers import (
     FollowSerializer,
@@ -17,6 +18,7 @@ class UserViewSet(DjoserUserViewSet):
     queryset = User.objects.all()
     pagination_class = LimitPageNumberPagination
     serializer_class = UserSerializer
+    permission_classes = (AuthorOrReadOnly,)
 
     @action(
         detail=True,

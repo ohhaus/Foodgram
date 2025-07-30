@@ -7,7 +7,7 @@ from users.models import Follow, User
 class UserSerializer(serializers.ModelSerializer):
     """Сериализатор для всех пользователей."""
 
-    is_subscribed = serializers.SerializerMethodField(read_only=True)
+    is_subscribed = serializers.SerializerMethodField(default=False)
     password = serializers.CharField(write_only=True, required=False)
 
     class Meta:
