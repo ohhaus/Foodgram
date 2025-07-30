@@ -1,3 +1,4 @@
+from drf_extra_fields.fields import Base64ImageField
 from rest_framework import exceptions, serializers, status
 
 from core.serializers import ShowRecipeAddedSerializer
@@ -20,6 +21,7 @@ class UserSerializer(serializers.ModelSerializer):
             'last_name',
             'is_subscribed',
             'password',
+            'avatar',
         )
 
     def get_is_subscribed(self, author):
@@ -30,20 +32,21 @@ class UserSerializer(serializers.ModelSerializer):
             and request.user.follower.filter(author=author).exists()
         )
 
+    def get_avatar(self, obj):
+        request = self.context.get('request')
+        if obj.avatar and request:
+            return request.build_absolute_uri(obj.avatar.url)
+        return None
+
 
 class UserAvatarSerializer(serializers.ModelSerializer):
     """Сериализатор для управления аватаром пользователя."""
 
-    avatar = serializers.ImageField(required=False)
+    avatar = Base64ImageField()
 
     class Meta:
         model = User
         fields = ('avatar',)
-
-    def update(self, instance, validated_data):
-        instance.avatar = validated_data.get('avatar', instance.avatar)
-        instance.save()
-        return instance
 
 
 class FollowSerializer(UserSerializer):

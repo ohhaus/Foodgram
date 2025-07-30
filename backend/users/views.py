@@ -1,8 +1,9 @@
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet as DjoserUserViewSet
-from rest_framework import permissions, response, status
+from rest_framework import permissions, status
 from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from core.pagination import LimitPageNumberPagination
 from core.permissions import AuthorOrReadOnly
@@ -35,18 +36,16 @@ class UserViewSet(DjoserUserViewSet):
                 user=user, author=author
             )
             if not created:
-                return response.Response(
+                return Response(
                     {'detail': settings.FOLLOW_ALREADY_EXISTS_ERROR},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             serializer = FollowSerializer(author, context={'request': request})
-            return response.Response(
-                serializer.data, status=status.HTTP_201_CREATED
-            )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         follow = get_object_or_404(Follow, user=user, author=author)
         follow.delete()
-        return response.Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=False,
@@ -64,25 +63,29 @@ class UserViewSet(DjoserUserViewSet):
         serializer = FollowSerializer(
             queryset, many=True, context={'request': request}
         )
-        return response.Response(serializer.data)
+        return Response(serializer.data)
 
     @action(
         detail=False,
-        methods=['PUT', 'DELETE'],
+        methods=['put', 'delete'],
         permission_classes=(permissions.IsAuthenticated,),
+        url_path='me/avatar'
     )
     def avatar(self, request):
         user = request.user
-        if request.method == 'POST':
-            serializer = UserAvatarSerializer(
-                user, data=request.data, partial=True
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return response.Response(
-                serializer.data, status=status.HTTP_200_OK
-            )
-        if request.method == 'DELETE':
+        if request.method == 'PUT':
+            if 'avatar' not in request.FILES:
+                return Response(
+                    {'detail': 'Файл аватара не был предоставлен'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            serializer = UserAvatarSerializer(user, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        elif request.method == 'DELETE':
             if user.avatar:
                 user.avatar.delete()
-            return response.Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)

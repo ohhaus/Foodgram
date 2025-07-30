@@ -4,6 +4,7 @@ from django.db.models import Sum
 from rest_framework import filters, permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 
 from core.filters import RecipeFilter
 from core.pagination import LimitPageNumberPagination
@@ -36,8 +37,14 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = (AuthorOrReadOnly,)
-    pagination_class = None
+    lookup_field = 'id'
+    ordering = ('name',)
+    ordering_fields = ('name', 'id')
+    permission_classes = (AllowAny,)
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, **args, **kwargs)
+        return Response(response.data['results'])
 
 
 class IngredientViewSet(viewsets.ModelViewSet):
@@ -45,24 +52,15 @@ class IngredientViewSet(viewsets.ModelViewSet):
 
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    permission_classes = (AuthorOrReadOnly,)
+    permission_classes = (AllowAny,)
     filter_backends = (filters.SearchFilter,)
-    search_fields = ('name',)
+    ordering_fields = ('name',)
+    filterset_fields = ('name',)
+    search_fields = ('^name',)
 
-    def get_queryset(self):
-        name = self.request.query_params.get('name')
-        queryset = self.queryset
-        if name:
-            name = unquote(name) if name[0] == '%' else name.translate('')
-            name = name.lower()
-            start_queryset = list(queryset.filter(name__isstartwith=name))
-            ingredients_set = set(start_queryset)
-            cont_queryset = queryset.filter(name__icontains=name)
-            start_queryset.extend(
-                [i for i in cont_queryset if i not in ingredients_set]
-            )
-            queryset = start_queryset
-        return queryset
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, **args, **kwargs)
+        return Response(response.data['results'])
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
