@@ -62,17 +62,23 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if not request.user.is_authenticated:
             return Response(
                 {'detail': 'Учетные данные не были предоставлены.'},
-                status=status.HTTP_401_UNAUTHORIZED
+                status=status.HTTP_401_UNAUTHORIZED,
             )
         return super().create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
         """Update recipe with validation."""
         partial = kwargs.pop('partial', False)
-        instance = self.get_object()
 
         if not partial:
-            required_fields = ['ingredients', 'tags', 'name', 'text', 'cooking_time', 'image']
+            required_fields = [
+                'ingredients',
+                'tags',
+                'name',
+                'text',
+                'cooking_time',
+                'image',
+            ]
             missing_fields = []
             for field in required_fields:
                 if field not in request.data:
@@ -81,14 +87,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
             if missing_fields:
                 error_dict = {}
                 for field in missing_fields:
-                    if field == 'ingredients':
-                        error_dict[field] = ['Это поле обязательно.']
-                    elif field == 'tags':
+                    if field == 'ingredients' or field == 'tags':
                         error_dict[field] = ['Это поле обязательно.']
                     else:
                         error_dict[field] = ['Это поле обязательно.']
                 return Response(error_dict, status=status.HTTP_400_BAD_REQUEST)
-        
+
         return super().update(request, *args, **kwargs)
 
     def perform_create(self, serializer):

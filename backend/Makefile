@@ -1,6 +1,5 @@
 .PHONY: help lint lint-fix format format-check check test clean install dev migrate runserver shell
 
-# Default target
 help:
 	@echo "Available commands:"
 	@echo "  help         - Show this help message"

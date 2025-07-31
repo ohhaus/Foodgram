@@ -3,13 +3,13 @@ Serializers for users app.
 """
 
 import base64
+import contextlib
 
 from django.core.files.base import ContentFile
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
 
 from .models import Follow, User
-import contextlib
 
 
 class Base64ImageField(serializers.ImageField):

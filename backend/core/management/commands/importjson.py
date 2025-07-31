@@ -4,6 +4,7 @@ from typing import Any
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+
 from recipes.models import Ingredient, Tag
 
 FILE_DIR = os.path.join(settings.BASE_DIR, 'data')
@@ -60,12 +61,14 @@ class Command(BaseCommand):
                 )
 
             except FileNotFoundError as e:
-                raise CommandError(str(e))
+                raise CommandError(f'Файл не найден: {e}') from e
             except json.JSONDecodeError as e:
                 raise CommandError(
-                    f'Invalid JSON format in {file_path}: {str(e)}'
-                )
+                    f'Некорректный формат JSON в {file_path}: {e}'
+                ) from e
             except ValueError as e:
-                raise CommandError(str(e))
+                raise CommandError(f'Недопустимое значение: {e}') from e
             except Exception as e:
-                raise CommandError(f'An unexpected error occurred: {str(e)}')
+                raise CommandError(
+                    f'Произошла непредвиденная ошибка: {e}'
+                ) from e

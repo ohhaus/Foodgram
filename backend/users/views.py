@@ -47,9 +47,9 @@ class UserViewSet(DjoserUserViewSet):
             if not request.data:
                 return Response(
                     {'avatar': ['Это поле обязательно.']},
-                    status=status.HTTP_400_BAD_REQUEST
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
-            
+
             serializer = SetAvatarSerializer(
                 user, data=request.data, partial=True
             )
