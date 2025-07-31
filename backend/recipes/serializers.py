@@ -61,7 +61,7 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating recipe ingredients."""
 
     id = serializers.IntegerField()
-    amount = serializers.IntegerField()
+    amount = serializers.IntegerField(min_value=1)
 
     class Meta:
         model = RecipeIngredient
@@ -146,16 +146,14 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                 'Ингредиенты не должны повторяться.'
             )
 
-        # Check if all ingredients exist
         existing_ingredients = Ingredient.objects.filter(id__in=ingredient_ids)
         if len(existing_ingredients) != len(ingredient_ids):
             raise serializers.ValidationError(
                 'Один или несколько ингредиентов не существуют.'
             )
 
-        # Validate amounts
         for item in value:
-            if item.get('amount', 0) <= 0:
+            if item.get('amount', 0) < 1:
                 raise serializers.ValidationError(
                     'Количество ингредиента должно быть больше 0.'
                 )
@@ -201,13 +199,16 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         ingredients_data = validated_data.pop('ingredients', None)
         tags_data = validated_data.pop('tags', None)
 
+        # Update recipe fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
 
+        # Update tags
         if tags_data is not None:
             instance.tags.set(tags_data)
 
+        # Update ingredients
         if ingredients_data is not None:
             instance.recipe_ingredients.all().delete()
             self._create_recipe_ingredients(instance, ingredients_data)
@@ -244,7 +245,7 @@ class RecipeMinifiedSerializer(serializers.ModelSerializer):
 class RecipeShortLinkSerializer(serializers.ModelSerializer):
     """Serializer for recipe short link."""
 
-    short_link = serializers.SerializerMethodField()
+    short_link = serializers.SerializerMethodField(source='short-link')
 
     class Meta:
         model = Recipe
@@ -255,5 +256,12 @@ class RecipeShortLinkSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request:
             base_url = request.build_absolute_uri('/').rstrip('/')
-            return f'{base_url}/s/{obj.short_link}/'
-        return f'/s/{obj.short_link}/'
+            return f'{base_url}/recipes/{obj.short_link}/'
+        return f'/recipes/{obj.short_link}/'
+
+    def to_representation(self, instance):
+        """Return representation with correct key name."""
+        data = super().to_representation(instance)
+        if 'short_link' in data:
+            data['short-link'] = data.pop('short_link')
+        return data

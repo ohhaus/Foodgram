@@ -9,6 +9,7 @@ from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
 
 from .models import Follow, User
+import contextlib
 
 
 class Base64ImageField(serializers.ImageField):
@@ -113,10 +114,8 @@ class SubscriptionSerializer(CustomUserSerializer):
 
         recipes = obj.recipes.all()
         if recipes_limit:
-            try:
+            with contextlib.suppress(ValueError, TypeError):
                 recipes = recipes[: int(recipes_limit)]
-            except (ValueError, TypeError):
-                pass
 
         from recipes.serializers import RecipeMinifiedSerializer
 

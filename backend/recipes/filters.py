@@ -1,7 +1,3 @@
-"""
-Filters for recipes app.
-"""
-
 import django_filters
 
 from .models import Ingredient, Recipe, Tag
@@ -28,8 +24,6 @@ class RecipeFilter(django_filters.FilterSet):
     def filter_is_favorited(self, queryset, name, value):
         """Filter recipes by favorite status."""
         if not self.request.user.is_authenticated:
-            if value:
-                return queryset.none()
             return queryset
         if value:
             return queryset.filter(favorites__user=self.request.user)
@@ -40,8 +34,6 @@ class RecipeFilter(django_filters.FilterSet):
     def filter_is_in_shopping_cart(self, queryset, name, value):
         """Filter recipes by shopping cart status."""
         if not self.request.user.is_authenticated:
-            if value:
-                return queryset.none()
             return queryset
         if value:
             return queryset.filter(shopping_cart__user=self.request.user)
