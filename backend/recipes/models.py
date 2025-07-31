@@ -1,9 +1,11 @@
 """
 Recipes models for FOODGRAM project.
 """
+
 import uuid
+
 from django.conf import settings
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from users.models import User
@@ -11,7 +13,7 @@ from users.models import User
 
 class Tag(models.Model):
     """Модель тега."""
-    
+
     name = models.CharField(
         'Название',
         max_length=settings.TAG_NAME_MAX_LENGTH,
@@ -34,7 +36,7 @@ class Tag(models.Model):
 
 class Ingredient(models.Model):
     """Модель ингредиента."""
-    
+
     name = models.CharField(
         'Название',
         max_length=settings.INGREDIENT_NAME_MAX_LENGTH,
@@ -51,7 +53,7 @@ class Ingredient(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=['name', 'measurement_unit'],
-                name='unique_ingredient_measurement_unit'
+                name='unique_ingredient_measurement_unit',
             )
         ]
 
@@ -61,7 +63,7 @@ class Ingredient(models.Model):
 
 class Recipe(models.Model):
     """Модель рецепта."""
-    
+
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -118,7 +120,7 @@ class Recipe(models.Model):
 
 class RecipeIngredient(models.Model):
     """Модель связи рецепта и ингредиента с количеством."""
-    
+
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
@@ -145,7 +147,7 @@ class RecipeIngredient(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=['recipe', 'ingredient'],
-                name='unique_recipe_ingredient'
+                name='unique_recipe_ingredient',
             )
         ]
 
@@ -155,7 +157,7 @@ class RecipeIngredient(models.Model):
 
 class Favorite(models.Model):
     """Модель избранного рецепта."""
-    
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -174,8 +176,7 @@ class Favorite(models.Model):
         verbose_name_plural = 'Избранное'
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'recipe'],
-                name='unique_user_favorite_recipe'
+                fields=['user', 'recipe'], name='unique_user_favorite_recipe'
             )
         ]
 
@@ -185,7 +186,7 @@ class Favorite(models.Model):
 
 class ShoppingCart(models.Model):
     """Модель списка покупок."""
-    
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -205,10 +206,11 @@ class ShoppingCart(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'recipe'],
-                name='unique_user_shopping_cart_recipe'
+                name='unique_user_shopping_cart_recipe',
             )
         ]
 
     def __str__(self):
-        return f'{self.user.username} добавил в список покупок {self.recipe.name}'
-
+        return (
+            f'{self.user.username} добавил в список покупок {self.recipe.name}'
+        )
