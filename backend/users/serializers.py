@@ -1,99 +1,98 @@
-from drf_extra_fields.fields import Base64ImageField
-from rest_framework import exceptions, serializers, status
+"""
+Serializers for users app.
+"""
+import base64
+from django.core.files.base import ContentFile
+from rest_framework import serializers
+from djoser.serializers import UserCreateSerializer, UserSerializer
 
-from core.serializers import ShowRecipeAddedSerializer
-from users.models import Follow, User
+from .models import User, Follow
 
 
-class UserSerializer(serializers.ModelSerializer):
-    """Сериализатор для всех пользователей."""
+class Base64ImageField(serializers.ImageField):
+    """Custom field for handling base64 encoded images."""
+    
+    def to_internal_value(self, data):
+        if isinstance(data, str) and data.startswith('data:image'):
+            format, imgstr = data.split(';base64,')
+            ext = format.split('/')[-1]
+            data = ContentFile(base64.b64decode(imgstr), name='avatar.' + ext)
+        return super().to_internal_value(data)
 
-    is_subscribed = serializers.SerializerMethodField(default=False)
-    password = serializers.CharField(write_only=True, required=False)
 
+class CustomUserCreateSerializer(UserCreateSerializer):
+    """Serializer for user creation."""
+    
     class Meta:
         model = User
-        fields = (
-            'id',
-            'email',
-            'username',
-            'first_name',
-            'last_name',
-            'is_subscribed',
-            'password',
-            'avatar',
-        )
+        fields = ('email', 'id', 'username', 'first_name', 'last_name', 'password')
+        extra_kwargs = {
+            'password': {'write_only': True},
+        }
 
-    def get_is_subscribed(self, author):
+    def create(self, validated_data):
+        user = User.objects.create_user(**validated_data)
+        return user
+
+
+class CustomUserSerializer(UserSerializer):
+    """Serializer for user representation."""
+    
+    is_subscribed = serializers.SerializerMethodField()
+    avatar = Base64ImageField(required=False, allow_null=True)
+    
+    class Meta:
+        model = User
+        fields = ('email', 'id', 'username', 'first_name', 'last_name', 'is_subscribed', 'avatar')
+        read_only_fields = ('id',)
+
+    def get_is_subscribed(self, obj):
+        """Check if current user is subscribed to this user."""
         request = self.context.get('request')
-        return (
-            request
-            and request.user.is_authenticated
-            and request.user.follower.filter(author=author).exists()
-        )
-
-    def get_avatar(self, obj):
-        request = self.context.get('request')
-        if obj.avatar and request:
-            return request.build_absolute_uri(obj.avatar.url)
-        return None
+        if request and request.user.is_authenticated:
+            return Follow.objects.filter(user=request.user, author=obj).exists()
+        return False
 
 
-class UserAvatarSerializer(serializers.ModelSerializer):
-    """Сериализатор для управления аватаром пользователя."""
-
+class SetAvatarSerializer(serializers.ModelSerializer):
+    """Serializer for setting user avatar."""
+    
     avatar = Base64ImageField()
-
+    
     class Meta:
         model = User
         fields = ('avatar',)
 
 
-class FollowSerializer(UserSerializer):
-    """Сериализатор подписки."""
-
-    recipes = serializers.SerializerMethodField(read_only=True)
-    recipes_count = serializers.SerializerMethodField(read_only=True)
-
-    class Meta(UserSerializer.Meta):
-        fields = UserSerializer.Meta.fields + (
-            'recipes',
-            'recipes_count',
-        )
-        read_only_fields = (
-            'email',
-            'username',
-            'last_name',
-            'first_name',
-        )
-
-    def validate(self, data):
-        author = self.instance
-        user = self.context.get('request').user
-        if Follow.objects.filter(user=user, author=author).exists():
-            raise exceptions.ValidationError(
-                detail='',
-                code=status.HTTP_400_BAD_REQUEST,
-            )
-        if user == author:
-            raise exceptions.ValidationError(
-                detail='', code=status.HTTP_400_BAD_REQUEST
-            )
-        return data
-
-    def get_recipes_count(self, obj):
-        return obj.recipes.count()
+class SubscriptionSerializer(CustomUserSerializer):
+    """Serializer for user subscriptions with recipes."""
+    
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = ('email', 'id', 'username', 'first_name', 'last_name', 'is_subscribed', 'recipes', 'recipes_count', 'avatar')
+        read_only_fields = ('id',)
 
     def get_recipes(self, obj):
+        """Get user's recipes with limit."""
         request = self.context.get('request')
-        limit = request.GET.get('recipes_limit')
+        recipes_limit = None
+        if request:
+            recipes_limit = request.query_params.get('recipes_limit')
+        
         recipes = obj.recipes.all()
-        if limit:
-            recipes = recipes[: int(limit)]
-        serializer = ShowRecipeAddedSerializer(
-            recipes,
-            many=True,
-            read_only=True,
-        )
+        if recipes_limit:
+            try:
+                recipes = recipes[:int(recipes_limit)]
+            except (ValueError, TypeError):
+                pass
+        
+        from recipes.serializers import RecipeMinifiedSerializer
+        return RecipeMinifiedSerializer(recipes, many=True, context=self.context).data
 
-        return serializer.data
+    def get_recipes_count(self, obj):
+        """Get total count of user's recipes."""
+        return obj.recipes.count()
+

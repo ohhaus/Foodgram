@@ -8,10 +8,10 @@ from recipes.views import IngredientViewSet, RecipeViewSet, TagViewSet
 from users.views import UserViewSet
 
 router = DefaultRouter()
-router.register(r'users', UserViewSet, basename='users')
-router.register(r'ingredients', IngredientViewSet, basename='ingredients')
-router.register(r'recipes', RecipeViewSet, basename='recipes')
-router.register(r'tags', TagViewSet, basename='tags')
+router.register('tags', TagViewSet, basename='tags')
+router.register('ingredients', IngredientViewSet, basename='ingredients')
+router.register('recipes', RecipeViewSet, basename='recipes')
+router.register('users', UserViewSet, basename='users')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

@@ -1,127 +1,163 @@
-from urllib.parse import unquote
-
-from django.db.models import Sum
-from rest_framework import filters, permissions, viewsets
+"""
+Views for recipes app.
+"""
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
 
-from core.filters import RecipeFilter
-from core.pagination import LimitPageNumberPagination
-from core.permissions import AuthorOrReadOnly
-from core.serializers import ShortLinkSerialzier
-from core.utils import (
-    generate_shopping_list_file,
-    handle_add_or_remove_recipe,
+from .models import Tag, Ingredient, Recipe, Favorite, ShoppingCart
+from .serializers import (
+    TagSerializer, IngredientSerializer, RecipeListSerializer,
+    RecipeCreateSerializer, RecipeMinifiedSerializer, RecipeShortLinkSerializer
 )
-from recipes.models import (
-    Favorite,
-    Ingredient,
-    Recipe,
-    RecipeIngredient,
-    ShoppingCart,
-    Tag,
-)
-from recipes.serializers import (
-    AddFavoriteRecipeSerializer,
-    AddShoppingListRecipeSerializer,
-    IngredientSerializer,
-    RecipeSerializer,
-    RecipeWriteSerializer,
-    TagSerializer,
-)
+from .filters import RecipeFilter, IngredientFilter
+from .utils import generate_shopping_cart_pdf
+from core.permissions import IsAuthorOrReadOnly
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
-    """Вьюсет для отображения тегов."""
-
+    """ViewSet for Tag model (read-only)."""
+    
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    lookup_field = 'id'
-    ordering = ('name',)
-    ordering_fields = ('name', 'id')
-    permission_classes = (AllowAny,)
-
-    def list(self, request, *args, **kwargs):
-        response = super().list(request, **args, **kwargs)
-        return Response(response.data['results'])
+    permission_classes = [permissions.AllowAny]
+    pagination_class = None
 
 
-class IngredientViewSet(viewsets.ModelViewSet):
-    """Вьюсет для отображения ингредиентов."""
-
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
+    """ViewSet for Ingredient model (read-only)."""
+    
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    permission_classes = (AllowAny,)
-    filter_backends = (filters.SearchFilter,)
-    ordering_fields = ('name',)
-    filterset_fields = ('name',)
-    search_fields = ('^name',)
-
-    def list(self, request, *args, **kwargs):
-        response = super().list(request, **args, **kwargs)
-        return Response(response.data['results'])
+    permission_classes = [permissions.AllowAny]
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = IngredientFilter
+    pagination_class = None
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    """Вьюсет для отображения рецептов."""
-
+    """ViewSet for Recipe model."""
+    
     queryset = Recipe.objects.all()
-    permission_classes = (AuthorOrReadOnly,)
-    serializer_class = RecipeSerializer
+    permission_classes = [IsAuthorOrReadOnly]
+    filter_backends = [DjangoFilterBackend]
     filterset_class = RecipeFilter
-    pagination_class = LimitPageNumberPagination
 
     def get_serializer_class(self):
-        if self.request.method in ('POST', 'PUT', 'PATCH'):
-            return RecipeWriteSerializer
-        return RecipeSerializer
+        """Return appropriate serializer class."""
+        if self.action in ['create', 'update', 'partial_update']:
+            return RecipeCreateSerializer
+        return RecipeListSerializer
 
-    @action(
-        detail=True,
-        methods=['POST', 'DELETE'],
-        permission_classes=(permissions.IsAuthenticated,),
-    )
-    def favorite(self, request, pk):
-        """Добавляем/удаляем рецепты из избранного."""
-        return handle_add_or_remove_recipe(
-            AddFavoriteRecipeSerializer, Favorite, request, pk
+    def perform_create(self, serializer):
+        """Set author to current user when creating recipe."""
+        serializer.save(author=self.request.user)
+
+    def get_queryset(self):
+        """Return optimized queryset."""
+        return Recipe.objects.select_related('author').prefetch_related(
+            'tags', 'recipe_ingredients__ingredient', 'favorites', 'shopping_cart'
         )
 
     @action(
         detail=True,
-        methods=['POST', 'DELETE'],
-        permission_classes=(permissions.IsAuthenticated),
+        methods=['get'],
+        permission_classes=[permissions.AllowAny],
+        url_path='get-link'
     )
-    def shopping_cart(self, request, pk):
-        """Добавляем/удаляем рецепты из списка покупок."""
-        return handle_add_or_remove_recipe(
-            AddShoppingListRecipeSerializer, ShoppingCart, request, pk
-        )
+    def get_link(self, request, pk=None):
+        """Get short link for recipe."""
+        recipe = self.get_object()
+        serializer = RecipeShortLinkSerializer(recipe, context={'request': request})
+        return Response(serializer.data)
 
     @action(
         detail=True,
-        methods=['GET'],
-        permission_classes=(permissions.IsAuthenticated,),
+        methods=['post', 'delete'],
+        permission_classes=[permissions.IsAuthenticated]
+    )
+    def favorite(self, request, pk=None):
+        """Add or remove recipe from favorites."""
+        recipe = self.get_object()
+        user = request.user
+        
+        if request.method == 'POST':
+            favorite, created = Favorite.objects.get_or_create(user=user, recipe=recipe)
+            if not created:
+                return Response(
+                    {'errors': 'Рецепт уже добавлен в избранное'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            serializer = RecipeMinifiedSerializer(recipe)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        elif request.method == 'DELETE':
+            favorite = Favorite.objects.filter(user=user, recipe=recipe).first()
+            if not favorite:
+                return Response(
+                    {'errors': 'Рецепт не найден в избранном'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            favorite.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        permission_classes=[permissions.IsAuthenticated]
+    )
+    def shopping_cart(self, request, pk=None):
+        """Add or remove recipe from shopping cart."""
+        recipe = self.get_object()
+        user = request.user
+        
+        if request.method == 'POST':
+            cart_item, created = ShoppingCart.objects.get_or_create(user=user, recipe=recipe)
+            if not created:
+                return Response(
+                    {'errors': 'Рецепт уже добавлен в список покупок'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            serializer = RecipeMinifiedSerializer(recipe)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        elif request.method == 'DELETE':
+            cart_item = ShoppingCart.objects.filter(user=user, recipe=recipe).first()
+            if not cart_item:
+                return Response(
+                    {'errors': 'Рецепт не найден в списке покупок'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            cart_item.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=[permissions.IsAuthenticated],
+        url_path='download_shopping_cart'
     )
     def download_shopping_cart(self, request):
-        ingredients = (
-            RecipeIngredient.objects.filter(
-                recipe__shopping_list__user=request.user
+        """Download shopping cart as PDF."""
+        user = request.user
+        shopping_cart_recipes = Recipe.objects.filter(shopping_cart__user=user)
+        
+        if not shopping_cart_recipes.exists():
+            return Response(
+                {'errors': 'Список покупок пуст'},
+                status=status.HTTP_400_BAD_REQUEST
             )
-            .values('ingredient__name', 'ingredient__measurement_unit')
-            .annotate(amount=Sum('amount'))
-            .order_by('ingredient__name')
-        )
+        
+        pdf_content = generate_shopping_cart_pdf(shopping_cart_recipes)
+        
+        response = HttpResponse(pdf_content, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="shopping_cart.pdf"'
+        return response
 
-        return generate_shopping_list_file(request.user, ingredients)
-
-    @action(
-        detail=True,
-        methods=['GET'],
-        permission_classes=(permissions.IsAuthenticated,),
-    )
-    def get_link(self, request, pk):
-        recipe = self.get_object()
-        serializer = ShortLinkSerialzier(recipe, context={'request': request})
-        return Response(serializer.data)

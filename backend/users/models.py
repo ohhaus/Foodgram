@@ -1,3 +1,6 @@
+"""
+Users models for FOODGRAM project.
+"""
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core import validators
@@ -97,3 +100,4 @@ class Follow(models.Model):
 
     def __str__(self):
         return f'Пользователь {self.user} подписан на {self.author}'
+

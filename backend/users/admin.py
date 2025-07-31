@@ -1,51 +1,47 @@
+"""
+Admin configuration for users app.
+"""
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.utils.translation import gettext_lazy as _
 
-from users.models import User
+from .models import User, Follow
 
 
 @admin.register(User)
-class UserAdmin(admin.ModelAdmin):
-    """Регистрация в админке пользователя."""
-
-    list_display = (
-        'id',
-        'username',
-        'email',
-        'first_name',
-        'last_name',
-        'is_active',
-        'is_staff',
-    )
-    list_filter = ('is_active', 'is_staff', 'is_superuser')
-    search_fields = ('username', 'email', 'first_name', 'last_name')
-    ordering = ('username',)
-    readonly_fields = ('last_login', 'date_joined')
-    list_display_links = ('id', 'username', 'email')
-    list_per_page = 20
+class UserAdmin(BaseUserAdmin):
+    """Admin configuration for User model."""
+    
+    list_display = ('email', 'username', 'first_name', 'last_name', 'is_staff', 'date_joined')
+    list_filter = ('is_staff', 'is_superuser', 'is_active', 'date_joined')
+    search_fields = ('username', 'first_name', 'last_name', 'email')
+    ordering = ('email',)
+    
     fieldsets = (
-        (
-            'Основная информация',
-            {
-                'fields': (
-                    'username',
-                    'email',
-                    'first_name',
-                    'last_name',
-                    'password',
-                )
-            },
-        ),
-        (
-            'Права доступа',
-            {
-                'fields': (
-                    'is_active',
-                    'is_staff',
-                    'is_superuser',
-                    'groups',
-                    'user_permissions',
-                )
-            },
-        ),
-        ('Важные даты', {'fields': ('last_login', 'date_joined')}),
+        (None, {'fields': ('email', 'password')}),
+        (_('Personal info'), {'fields': ('username', 'first_name', 'last_name', 'avatar')}),
+        (_('Permissions'), {
+            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
+        }),
+        (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
     )
+    
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('email', 'username', 'first_name', 'last_name', 'password1', 'password2'),
+        }),
+    )
+
+
+@admin.register(Follow)
+class FollowAdmin(admin.ModelAdmin):
+    """Admin configuration for Follow model."""
+    
+    list_display = ('user', 'author')
+    list_filter = ('user', 'author')
+    search_fields = ('user__username', 'author__username')
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'author')
+

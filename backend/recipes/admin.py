@@ -1,80 +1,77 @@
+"""
+Admin configuration for recipes app.
+"""
 from django.contrib import admin
-from django.contrib.admin import SimpleListFilter
 from django.utils.html import format_html
 
-from recipes.models import (
-    Ingredient,
-    Recipe,
-    RecipeIngredient,
-    Tag,
-)
-
-
-class RecipeByUserFilter(SimpleListFilter):
-    title = 'Автор рецепта'
-    parameter_name = 'author'
-
-    def lookups(self, request, model_admin):
-        authors = model_admin.model.objects.values_list(
-            'author__id', 'author__username'
-        ).distinct()
-        return list(authors)
-
-    def queryset(self, request, queryset):
-        if self.value():
-            return queryset.filter(author_id=self.value())
-        return queryset
+from .models import Tag, Ingredient, Recipe, RecipeIngredient, Favorite, ShoppingCart
 
 
 class RecipeIngredientInline(admin.TabularInline):
+    """Inline for recipe ingredients."""
     model = RecipeIngredient
     extra = 1
-    fields = ('ingredient', 'amount')
-    autocomplete_fields = ('ingredient',)
+    min_num = 1
 
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'slug')
-    list_filter = ('name',)
+    """Admin configuration for Tag model."""
+    
+    list_display = ('name', 'slug')
     search_fields = ('name', 'slug')
-    empty_value_display = '-пусто-'
+    prepopulated_fields = {'slug': ('name',)}
 
 
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'measurement_unit')
+    """Admin configuration for Ingredient model."""
+    
+    list_display = ('name', 'measurement_unit')
     list_filter = ('measurement_unit',)
     search_fields = ('name',)
-    empty_value_display = '-пусто-'
 
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'author', 'cooking_time', 'display_image')
-    list_filter = ('tags', RecipeByUserFilter, 'cooking_time')
-    search_fields = ('name', 'author__username', 'tags__name')
-    inlines = [
-        RecipeIngredientInline
-    ]  # Убраны FavoriteInline и ShoppingCartInline
-    empty_value_display = '-пусто-'
-
-    def display_image(self, obj):
-        try:
-            if obj.image and obj.image.url:
-                return format_html(
-                    '<img src="{}" width="50" height="50" />', obj.image.url
-                )
-        except ValueError:
-            pass
-        return '-нет изображения-'
-
-    display_image.short_description = 'Изображение'
+    """Admin configuration for Recipe model."""
+    
+    list_display = ('name', 'author', 'cooking_time', 'pub_date', 'favorites_count')
+    list_filter = ('author', 'tags', 'pub_date')
+    search_fields = ('name', 'author__username')
+    readonly_fields = ('pub_date', 'short_link', 'favorites_count')
+    filter_horizontal = ('tags',)
+    inlines = (RecipeIngredientInline,)
+    
+    def favorites_count(self, obj):
+        """Return the number of users who favorited this recipe."""
+        return obj.favorites.count()
+    favorites_count.short_description = 'В избранном'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('author').prefetch_related('tags', 'favorites')
 
 
-@admin.register(RecipeIngredient)
-class RecipeIngredientAdmin(admin.ModelAdmin):
-    list_display = ('id', 'recipe', 'ingredient', 'amount')
-    list_filter = ('recipe__name', 'ingredient__name')
-    search_fields = ('recipe__name', 'ingredient__name')
-    empty_value_display = '-пусто-'
+@admin.register(Favorite)
+class FavoriteAdmin(admin.ModelAdmin):
+    """Admin configuration for Favorite model."""
+    
+    list_display = ('user', 'recipe')
+    list_filter = ('user', 'recipe__author')
+    search_fields = ('user__username', 'recipe__name')
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'recipe')
+
+
+@admin.register(ShoppingCart)
+class ShoppingCartAdmin(admin.ModelAdmin):
+    """Admin configuration for ShoppingCart model."""
+    
+    list_display = ('user', 'recipe')
+    list_filter = ('user', 'recipe__author')
+    search_fields = ('user__username', 'recipe__name')
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'recipe')
+
