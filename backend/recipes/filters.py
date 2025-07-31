@@ -12,8 +12,8 @@ class RecipeFilter(django_filters.FilterSet):
         queryset=Tag.objects.all(),
     )
     author = django_filters.NumberFilter(field_name='author__id')
-    is_favorited = django_filters.BooleanFilter(method='filter_is_favorited')
-    is_in_shopping_cart = django_filters.BooleanFilter(
+    is_favorited = django_filters.CharFilter(method='filter_is_favorited')
+    is_in_shopping_cart = django_filters.CharFilter(
         method='filter_is_in_shopping_cart'
     )
 
@@ -25,9 +25,9 @@ class RecipeFilter(django_filters.FilterSet):
         """Filter recipes by favorite status."""
         if not self.request.user.is_authenticated:
             return queryset
-        if value:
+        if value in ['1', 'true', 'True']:
             return queryset.filter(favorites__user=self.request.user)
-        elif value is False:
+        elif value in ['0', 'false', 'False']:
             return queryset.exclude(favorites__user=self.request.user)
         return queryset
 
@@ -35,9 +35,9 @@ class RecipeFilter(django_filters.FilterSet):
         """Filter recipes by shopping cart status."""
         if not self.request.user.is_authenticated:
             return queryset
-        if value:
+        if value in ['1', 'true', 'True']:
             return queryset.filter(shopping_cart__user=self.request.user)
-        elif value is False:
+        elif value in ['0', 'false', 'False']:
             return queryset.exclude(shopping_cart__user=self.request.user)
         return queryset
 
