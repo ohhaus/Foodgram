@@ -17,8 +17,6 @@ from .models import (
 
 
 class Base64ImageField(serializers.ImageField):
-    """Custom field for handling base64 encoded images."""
-
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
             format, imgstr = data.split(';base64,')
@@ -28,7 +26,7 @@ class Base64ImageField(serializers.ImageField):
 
 
 class TagSerializer(serializers.ModelSerializer):
-    """Serializer for Tag model."""
+    """Сериализатор модели Tag."""
 
     class Meta:
         model = Tag
@@ -36,7 +34,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class IngredientSerializer(serializers.ModelSerializer):
-    """Serializer for Ingredient model."""
+    """Сериализатор модели Ingredient."""
 
     class Meta:
         model = Ingredient
@@ -44,7 +42,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
-    """Serializer for RecipeIngredient model."""
+    """Сериализатор модели RecipeIngredient."""
 
     id = serializers.ReadOnlyField(source='ingredient.id')
     name = serializers.ReadOnlyField(source='ingredient.name')
@@ -58,7 +56,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating recipe ingredients."""
+    """Сериализатор создания ингредиентов в рецепте."""
 
     id = serializers.IntegerField()
     amount = serializers.IntegerField(min_value=1)
@@ -69,7 +67,7 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
 
 
 class RecipeListSerializer(serializers.ModelSerializer):
-    """Serializer for recipe list and detail view."""
+    """Сериализатор для списка рецептов и детального просмотра."""
 
     tags = TagSerializer(many=True, read_only=True)
     author = CustomUserSerializer(read_only=True)
@@ -114,7 +112,7 @@ class RecipeListSerializer(serializers.ModelSerializer):
 
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
-    """Serializer for recipe creation and update."""
+    """Сериализатор создания и обновлени рецепта."""
 
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True
@@ -134,7 +132,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         )
 
     def validate_ingredients(self, value):
-        """Validate ingredients."""
         if not value:
             raise serializers.ValidationError(
                 'Необходимо указать хотя бы один ингредиент.'
@@ -161,7 +158,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return value
 
     def validate_tags(self, value):
-        """Validate tags."""
         if not value:
             raise serializers.ValidationError(
                 'Необходимо указать хотя бы один тег.'
@@ -173,7 +169,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return value
 
     def validate_cooking_time(self, value):
-        """Validate cooking time."""
         if value < 1:
             raise serializers.ValidationError(
                 'Время приготовления должно быть больше 0.'
@@ -182,7 +177,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
-        """Create recipe with ingredients and tags."""
         ingredients_data = validated_data.pop('ingredients')
         tags_data = validated_data.pop('tags')
 
@@ -195,20 +189,16 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        """Update recipe with ingredients and tags."""
         ingredients_data = validated_data.pop('ingredients', None)
         tags_data = validated_data.pop('tags', None)
 
-        # Update recipe fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
 
-        # Update tags
         if tags_data is not None:
             instance.tags.set(tags_data)
 
-        # Update ingredients
         if ingredients_data is not None:
             instance.recipe_ingredients.all().delete()
             self._create_recipe_ingredients(instance, ingredients_data)
@@ -216,7 +206,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return instance
 
     def _create_recipe_ingredients(self, recipe, ingredients_data):
-        """Create recipe ingredients."""
         recipe_ingredients = []
         for ingredient_data in ingredients_data:
             ingredient = Ingredient.objects.get(id=ingredient_data['id'])
@@ -230,12 +219,11 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         RecipeIngredient.objects.bulk_create(recipe_ingredients)
 
     def to_representation(self, instance):
-        """Return representation using RecipeListSerializer."""
         return RecipeListSerializer(instance, context=self.context).data
 
 
 class RecipeMinifiedSerializer(serializers.ModelSerializer):
-    """Minified serializer for recipe (for favorites and shopping cart)."""
+    """Сериализатор для краткого представления рецепта."""
 
     class Meta:
         model = Recipe
@@ -243,7 +231,7 @@ class RecipeMinifiedSerializer(serializers.ModelSerializer):
 
 
 class RecipeShortLinkSerializer(serializers.ModelSerializer):
-    """Serializer for recipe short link."""
+    """Сериализатор для получения короткой ссылки на рецепт."""
 
     short_link = serializers.SerializerMethodField(source='short-link')
 
@@ -252,7 +240,6 @@ class RecipeShortLinkSerializer(serializers.ModelSerializer):
         fields = ('short_link',)
 
     def get_short_link(self, obj):
-        """Generate short link URL."""
         request = self.context.get('request')
         if request:
             base_url = request.build_absolute_uri('/').rstrip('/')
@@ -260,7 +247,6 @@ class RecipeShortLinkSerializer(serializers.ModelSerializer):
         return f'/recipes/{obj.short_link}/'
 
     def to_representation(self, instance):
-        """Return representation with correct key name."""
         data = super().to_representation(instance)
         if 'short_link' in data:
             data['short-link'] = data.pop('short_link')

@@ -1,7 +1,3 @@
-"""
-Serializers for users app.
-"""
-
 import base64
 import contextlib
 
@@ -13,7 +9,7 @@ from .models import Follow, User
 
 
 class Base64ImageField(serializers.ImageField):
-    """Custom field for handling base64 encoded images."""
+    """Поле для обработки изображений, закодированных в base64."""
 
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
@@ -24,7 +20,7 @@ class Base64ImageField(serializers.ImageField):
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
-    """Serializer for user creation."""
+    """Сериализатор для создания пользователя."""
 
     class Meta:
         model = User
@@ -46,7 +42,7 @@ class CustomUserCreateSerializer(UserCreateSerializer):
 
 
 class CustomUserSerializer(UserSerializer):
-    """Serializer for user representation."""
+    """Сериализатор для представления пользователя."""
 
     is_subscribed = serializers.SerializerMethodField()
     avatar = Base64ImageField(required=False, allow_null=True)
@@ -65,7 +61,7 @@ class CustomUserSerializer(UserSerializer):
         read_only_fields = ('id',)
 
     def get_is_subscribed(self, obj):
-        """Check if current user is subscribed to this user."""
+        """Проверяет, подписан ли текущий пользователь на данного пользователя."""
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             return Follow.objects.filter(
@@ -75,7 +71,7 @@ class CustomUserSerializer(UserSerializer):
 
 
 class SetAvatarSerializer(serializers.ModelSerializer):
-    """Serializer for setting user avatar."""
+    """Сериализатор для установки аватара пользователя."""
 
     avatar = Base64ImageField()
 
@@ -85,7 +81,7 @@ class SetAvatarSerializer(serializers.ModelSerializer):
 
 
 class SubscriptionSerializer(CustomUserSerializer):
-    """Serializer for user subscriptions with recipes."""
+    """Сериализатор для подписок пользователя с рецептами."""
 
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
@@ -106,7 +102,7 @@ class SubscriptionSerializer(CustomUserSerializer):
         read_only_fields = ('id',)
 
     def get_recipes(self, obj):
-        """Get user's recipes with limit."""
+        """Получает рецепты пользователя с учетом лимита."""
         request = self.context.get('request')
         recipes_limit = None
         if request:
@@ -124,5 +120,5 @@ class SubscriptionSerializer(CustomUserSerializer):
         ).data
 
     def get_recipes_count(self, obj):
-        """Get total count of user's recipes."""
+        """Получает общее количество рецептов пользователя."""
         return obj.recipes.count()

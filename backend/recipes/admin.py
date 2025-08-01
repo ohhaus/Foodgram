@@ -1,7 +1,3 @@
-"""
-Admin configuration for recipes app.
-"""
-
 from django.contrib import admin
 
 from .models import (
@@ -15,7 +11,7 @@ from .models import (
 
 
 class RecipeIngredientInline(admin.TabularInline):
-    """Inline for recipe ingredients."""
+    """Встроенный класс для ингредиентов рецепта."""
 
     model = RecipeIngredient
     extra = 1
@@ -24,7 +20,7 @@ class RecipeIngredientInline(admin.TabularInline):
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    """Admin configuration for Tag model."""
+    """Конфигурация админ-панели для модели Tag."""
 
     list_display = ('name', 'slug')
     search_fields = ('name', 'slug')
@@ -33,7 +29,7 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
-    """Admin configuration for Ingredient model."""
+    """Конфигурация админ-панели для модели Ingredient."""
 
     list_display = ('name', 'measurement_unit')
     list_filter = ('measurement_unit',)
@@ -42,7 +38,7 @@ class IngredientAdmin(admin.ModelAdmin):
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    """Admin configuration for Recipe model."""
+    """Конфигурация админ-панели для модели Recipe."""
 
     list_display = (
         'name',
@@ -58,7 +54,7 @@ class RecipeAdmin(admin.ModelAdmin):
     inlines = (RecipeIngredientInline,)
 
     def favorites_count(self, obj):
-        """Return the number of users who favorited this recipe."""
+        """Возвращает количество пользователей, добавивших рецепт в избранное."""
         return obj.favorites.count()
 
     favorites_count.short_description = 'В избранном'
@@ -74,7 +70,7 @@ class RecipeAdmin(admin.ModelAdmin):
 
 @admin.register(Favorite)
 class FavoriteAdmin(admin.ModelAdmin):
-    """Admin configuration for Favorite model."""
+    """Конфигурация админ-панели для модели Favorite."""
 
     list_display = ('user', 'recipe')
     list_filter = ('user', 'recipe__author')
@@ -86,7 +82,7 @@ class FavoriteAdmin(admin.ModelAdmin):
 
 @admin.register(ShoppingCart)
 class ShoppingCartAdmin(admin.ModelAdmin):
-    """Admin configuration for ShoppingCart model."""
+    """Конфигурация админ-панели для модели ShoppingCart."""
 
     list_display = ('user', 'recipe')
     list_filter = ('user', 'recipe__author')

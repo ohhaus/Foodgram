@@ -1,7 +1,3 @@
-"""
-Recipes models for FOODGRAM project.
-"""
-
 import uuid
 
 from django.conf import settings

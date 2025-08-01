@@ -1,7 +1,3 @@
-"""
-Admin configuration for users app.
-"""
-
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
@@ -11,7 +7,7 @@ from .models import Follow, User
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    """Admin configuration for User model."""
+    """Конфигурация админ-панели для модели User."""
 
     list_display = (
         'email',
@@ -66,7 +62,7 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(Follow)
 class FollowAdmin(admin.ModelAdmin):
-    """Admin configuration for Follow model."""
+    """Конфигурация админ-панели для модели Follow."""
 
     list_display = ('user', 'author')
     list_filter = ('user', 'author')

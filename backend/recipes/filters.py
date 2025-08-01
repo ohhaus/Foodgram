@@ -4,7 +4,7 @@ from .models import Ingredient, Recipe, Tag
 
 
 class RecipeFilter(django_filters.FilterSet):
-    """Filter for Recipe model."""
+    """Фильтр для модели рецепта."""
 
     tags = django_filters.ModelMultipleChoiceFilter(
         field_name='tags__slug',
@@ -22,7 +22,7 @@ class RecipeFilter(django_filters.FilterSet):
         fields = ['tags', 'author', 'is_favorited', 'is_in_shopping_cart']
 
     def filter_is_favorited(self, queryset, name, value):
-        """Filter recipes by favorite status."""
+        """Фильтрация рецептов по избранному."""
         if not self.request.user.is_authenticated:
             return queryset
         if value in ['1', 'true', 'True']:
@@ -32,7 +32,7 @@ class RecipeFilter(django_filters.FilterSet):
         return queryset
 
     def filter_is_in_shopping_cart(self, queryset, name, value):
-        """Filter recipes by shopping cart status."""
+        """Фильтрация рецептов по списку покупок."""
         if not self.request.user.is_authenticated:
             return queryset
         if value in ['1', 'true', 'True']:
@@ -43,7 +43,7 @@ class RecipeFilter(django_filters.FilterSet):
 
 
 class IngredientFilter(django_filters.FilterSet):
-    """Filter for Ingredient model."""
+    """Фильтр для модели ингредиента."""
 
     name = django_filters.CharFilter(method='filter_name')
 
@@ -52,7 +52,7 @@ class IngredientFilter(django_filters.FilterSet):
         fields = ['name']
 
     def filter_name(self, queryset, name, value):
-        """Filter ingredients by name (case-insensitive, starts with)."""
+        """Фитрация ингредиентов по имени."""
         if value:
             return queryset.filter(name__istartswith=value)
         return queryset

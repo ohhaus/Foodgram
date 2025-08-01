@@ -1,7 +1,3 @@
-"""
-Views for recipes app.
-"""
-
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions, status, viewsets
@@ -24,7 +20,7 @@ from .utils import generate_shopping_cart_pdf
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
-    """ViewSet for Tag model (read-only)."""
+    """Только для чтения ViewSet для модели Tag."""
 
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
@@ -33,7 +29,7 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
-    """ViewSet for Ingredient model (read-only)."""
+    """Только для чтения ViewSet для модели Ingredient."""
 
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
@@ -44,7 +40,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    """ViewSet for Recipe model."""
+    """ViewSet для модели Recipe."""
 
     queryset = Recipe.objects.all()
     permission_classes = [IsAuthorOrReadOnly]
@@ -52,13 +48,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filterset_class = RecipeFilter
 
     def get_serializer_class(self):
-        """Return appropriate serializer class."""
+        """Возвращает подходящий класс сериализатора."""
         if self.action in ['create', 'update', 'partial_update']:
             return RecipeCreateSerializer
         return RecipeListSerializer
 
     def create(self, request, *args, **kwargs):
-        """Create recipe with authentication check."""
+        """Создает рецепт с проверкой аутентификации."""
         if not request.user.is_authenticated:
             return Response(
                 {'detail': 'Учетные данные не были предоставлены.'},
@@ -67,7 +63,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return super().create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
-        """Update recipe with validation."""
+        """Обновляет рецепт с валидацией."""
         partial = kwargs.pop('partial', False)
 
         if not partial:
@@ -96,11 +92,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return super().update(request, *args, **kwargs)
 
     def perform_create(self, serializer):
-        """Set author to current user when creating recipe."""
+        """Устанавливает текущего пользователя как автора при создании рецепта."""
         serializer.save(author=self.request.user)
 
     def get_queryset(self):
-        """Return optimized queryset."""
+        """Возвращает оптимизированный набор запросов."""
         return Recipe.objects.select_related('author').prefetch_related(
             'tags',
             'recipe_ingredients__ingredient',
@@ -115,7 +111,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='get-link',
     )
     def get_link(self, request, pk=None):
-        """Get short link for recipe."""
+        """Получает короткую ссылку на рецепт."""
         recipe = self.get_object()
         serializer = RecipeShortLinkSerializer(
             recipe, context={'request': request}
@@ -128,7 +124,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=[permissions.IsAuthenticated],
     )
     def favorite(self, request, pk=None):
-        """Add or remove recipe from favorites."""
+        """Добавляет или удаляет рецепт из избранного."""
         recipe = self.get_object()
         user = request.user
 
@@ -164,7 +160,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=[permissions.IsAuthenticated],
     )
     def shopping_cart(self, request, pk=None):
-        """Add or remove recipe from shopping cart."""
+        """Добавляет или удаляет рецепт из списка покупок."""
         recipe = self.get_object()
         user = request.user
 
@@ -201,7 +197,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='download_shopping_cart',
     )
     def download_shopping_cart(self, request):
-        """Download shopping cart as PDF."""
+        """Скачивает список покупок в формате PDF."""
         user = request.user
         shopping_cart_recipes = Recipe.objects.filter(shopping_cart__user=user)
 

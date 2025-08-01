@@ -1,7 +1,3 @@
-"""
-Views for users app.
-"""
-
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet as DjoserUserViewSet
 from rest_framework import permissions, status
@@ -17,7 +13,7 @@ from .serializers import (
 
 
 class UserViewSet(DjoserUserViewSet):
-    """ViewSet for User model with custom actions."""
+    """ViewSet для модели User с пользовательскими действиями."""
 
     queryset = User.objects.all()
     serializer_class = CustomUserSerializer
@@ -29,7 +25,7 @@ class UserViewSet(DjoserUserViewSet):
         permission_classes=[permissions.IsAuthenticated],
     )
     def me(self, request):
-        """Get current user profile."""
+        """Получение профиля текущего пользователя."""
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
 
@@ -40,7 +36,7 @@ class UserViewSet(DjoserUserViewSet):
         url_path='me/avatar',
     )
     def avatar(self, request):
-        """Set or delete user avatar."""
+        """Установка или удаление аватара пользователя."""
         user = request.user
 
         if request.method == 'PUT':
@@ -74,7 +70,7 @@ class UserViewSet(DjoserUserViewSet):
         permission_classes=[permissions.IsAuthenticated],
     )
     def subscriptions(self, request):
-        """Get user subscriptions."""
+        """Получение подписок пользователя."""
         user = request.user
         subscriptions = User.objects.filter(following__user=user)
 
@@ -96,7 +92,7 @@ class UserViewSet(DjoserUserViewSet):
         permission_classes=[permissions.IsAuthenticated],
     )
     def subscribe(self, request, id=None):
-        """Subscribe or unsubscribe to/from user."""
+        """Подписка или отписка от пользователя."""
         user = request.user
         try:
             author = get_object_or_404(User, pk=id)
