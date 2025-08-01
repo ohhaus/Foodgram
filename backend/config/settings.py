@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -72,32 +73,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if 'test' in sys.argv or os.getenv('USE_SQLITE', 'False').lower() == 'true':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3'
+            if 'test' not in sys.argv
+            else ':memory:',
+        }
     }
-}
-# if 'test' in sys.argv or os.getenv('USE_SQLITE', 'False').lower() == 'true':
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.sqlite3',
-#             'NAME': BASE_DIR / 'db.sqlite3'
-#             if 'test' not in sys.argv
-#             else ':memory:',
-#         }
-#     }
-# else:
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.postgresql',
-#             'NAME': os.getenv('DB_NAME', 'foodgram'),
-#             'USER': os.getenv('DB_USER', 'foodgram_user'),
-#             'PASSWORD': os.getenv('DB_PASSWORD', 'password'),
-#             'HOST': os.getenv('DB_HOST', 'db'),
-#             'PORT': os.getenv('DB_PORT', '5432'),
-#         }
-#     }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME', 'foodgram'),
+            'USER': os.getenv('DB_USER', 'foodgram_user'),
+            'PASSWORD': os.getenv('DB_PASSWORD', 'password'),
+            'HOST': os.getenv('DB_HOST', 'db'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+        }
+    }
 
 AUTH_USER_MODEL = 'users.User'
 
