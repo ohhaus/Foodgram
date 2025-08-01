@@ -92,7 +92,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return super().update(request, *args, **kwargs)
 
     def perform_create(self, serializer):
-        """Устанавливает текущего пользователя как автора при создании рецепта."""
+        """Устанавливает текущего пользователя автором при создании рецепта."""
         serializer.save(author=self.request.user)
 
     def get_queryset(self):
