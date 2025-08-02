@@ -1,0 +1,132 @@
+name: CI/CD Foodgram
+
+on:
+    push:
+        branches: [main]
+
+jobs:
+    tests:
+        runs-on: ubuntu-latest
+        services:
+            postgres:
+                image: postgres:13
+                env:
+                    POSTGRES_DB=foodgram
+                    POSTGRES_USER=foodgram_user
+                    POSTGRES_PASSWORD=secretpassword
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+        steps:
+            - uses: actions/checkout@v4
+            - name: Set up Python
+              uses: actions/setup-python@v4
+              with:
+                  python-version: "3.11"
+            - name: Install flake8
+              run: pip install flake8
+            - name: Run flake8
+              run: flake8 backend/
+            - name: Install dependencies
+              run: |
+                  pip install -r backend/requirements.txt
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "18"
+            - name: Install frontend dependencies
+              run: |
+                  cd frontend
+                  npm ci
+            - name: Run frontend tests
+              run: |
+                  cd frontend
+                  npm test -- --watchAll=false --passWithNoTests
+            - name: Run backend tests
+              env:
+                  POSTGRES_DB: foodgram
+                  POSTGRES_USER: foodgram_user
+                  POSTGRES_PASSWORD: secretpassword
+                  DB_HOST: localhost
+                  DB_PORT: 5432
+                  DJANGO_SECRET_KEY: test-secret-key-for-ci
+                  DJANGO_DEBUG: False
+                  DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+              run: |
+                  python -m pytest
+
+    build-and-push:
+        runs-on: ubuntu-latest
+        needs: tests
+        if: github.ref == 'refs/heads/main'
+        steps:
+            - uses: actions/checkout@v4
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+            - name: Login to Docker Hub
+              uses: docker/login-action@v3
+              with:
+                  username: ${{ secrets.DOCKER_USERNAME }}
+                  password: ${{ secrets.DOCKER_PASSWORD }}
+            - name: Build and push backend
+              uses: docker/build-push-action@v5
+              with:
+                  context: ./backend
+                  push: true
+                  tags: ohhaus/foodgram_backend:${{ github.sha }}
+            - name: Build and push frontend
+              uses: docker/build-push-action@v5
+              with:
+                  context: ./frontend
+                  push: true
+                  tags: ohhaus/foodgram_frontend:${{ github.sha }}
+            - name: Build and push gateway
+              uses: docker/build-push-action@v5
+              with:
+                  context: ./nginx
+                  push: true
+                  tags: ohhaus/foodgram_gateway:${{ github.sha }}
+
+    deploy:
+        runs-on: ubuntu-latest
+        needs: build-and-push
+        if: github.ref == 'refs/heads/main'
+        steps:
+            - name: Deploy to server
+              uses: appleboy/ssh-action@v1.0.3
+              with:
+                  host: ${{ secrets.HOST }}
+                  username: ${{ secrets.USER }}
+                  key: ${{ secrets.SSH_KEY }}
+                  passphrase: ${{ secrets.SSH_PASSPHRASE }}
+                  script: |
+                      cd foodgram
+                      sudo docker compose -f docker-compose.production.yml pull
+                      sudo docker compose -f docker-compose.production.yml down
+                      sudo docker compose -f docker-compose.production.yml up -d
+                      sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
+                      sudo docker compose -f docker-compose.production.yml exec backend python manage.py importjson
+                      sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --noinput
+                      sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /static/
+                      sudo docker system prune -f
+
+    send-message:
+        runs-on: ubuntu-latest
+        needs: deploy
+        if: github.ref == 'refs/heads/main'
+        steps:
+            - name: Send Telegram message
+              uses: appleboy/telegram-action@master
+              with:
+                  to: ${{ secrets.TELEGRAM_TO }}
+                  token: ${{ secrets.TELEGRAM_TOKEN }}
+                  message: |
+                      ✅ Деплой Foodgram успешно завершён!
+
+                      Репозиторий: ${{ github.repository }}
+                      Автор: ${{ github.actor }}
+                      Коммит: ${{ github.sha }}
