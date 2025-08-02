@@ -138,6 +138,9 @@ dmypy.json
 .idea
 .vscode
 
+.ruff_cache
+.DS_Store
+
 static/
 media/
 
