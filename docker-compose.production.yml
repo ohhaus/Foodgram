@@ -1,0 +1,38 @@
+version: "3"
+
+volumes:
+    pg_data:
+    static:
+    media:
+
+services:
+    db:
+        image: postgres:13.10
+        env_file: .env
+        volumes:
+            - pg_data:/var/lib/postgresql/data
+        healthcheck:
+          test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+          interval: 30s
+          timeout: 10s
+          retries: 5
+    backend:
+        image: ohhaus/foodgram_backend:latest
+        env_file: .env
+        volumes:
+            - static:/app/collectedstatic
+            - media:/app/media
+    frontend:
+        image: ohhaus/foodgram_frontend:latest
+        env_file: .env
+        command: sh -c "cp /app/build/index.html /static/ && cp -r /app/build/static/* /static/"
+        volumes:
+            - static:/static
+    gateway:
+        image: ohhaus/foodgram_gateway:latest
+        env_file: .env
+        volumes:
+            - static:/static
+            - media:/media
+        ports:
+            - 8080:80
