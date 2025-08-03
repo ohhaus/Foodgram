@@ -243,10 +243,12 @@ class RecipeShortLinkSerializer(serializers.ModelSerializer):
             # Генерируем короткую ссылку, если её ещё нет
             instance.short_link = uuid.uuid4().hex[:3]
             instance.save(update_fields=['short_link'])
-        
+
         request = self.context.get('request')
-        base_url = request.build_absolute_uri('/').rstrip('/') if request else 'https://foodgram.example.org'
-        
-        return {
-            'short-link': f'{base_url}/s/{instance.short_link}'
-        }
+        base_url = (
+            request.build_absolute_uri('/').rstrip('/')
+            if request
+            else 'https://foodgram.example.org'
+        )
+
+        return {'short-link': f'{base_url}/s/{instance.short_link}'}

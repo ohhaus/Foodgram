@@ -42,7 +42,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 class RecipeViewSet(viewsets.ModelViewSet):
     """Вьюсет для работы с рецептами."""
-    
+
     @action(detail=False, methods=['get'], url_path='s/(?P<short_link>[^/.]+)')
     def get_by_short_link(self, request, short_link):
         """Получение рецепта по короткой ссылке."""

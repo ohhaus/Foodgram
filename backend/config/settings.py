@@ -15,7 +15,9 @@ SECRET_KEY = os.getenv(
 
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,foodgram-ya.myddns.me').split(',')
+ALLOWED_HOSTS = os.getenv(
+    'ALLOWED_HOSTS', 'localhost,127.0.0.1,foodgram-ya.myddns.me'
+).split(',')
 
 DJANGO_APPS = [
     'jazzmin',
@@ -169,47 +171,45 @@ DJOSER = {
 }
 
 JAZZMIN_SETTINGS = {
-    "site_title": "Foodgram Admin",
-    "site_header": "Foodgram",
-    "site_brand": "Foodgram",
-    "welcome_sign": "Добро пожаловать в админку Foodgram!",
-    "copyright": "Foodgram",
-
-    "search_model": ["recipes.Recipe", "users.User"],
-
-    "topmenu_links": [
-        {"name": "На сайт", "url": "/", "new_window": True},
-        {"model": "auth.User"},
-        {"app": "recipes"},
+    'site_title': 'Foodgram Admin',
+    'site_header': 'Foodgram',
+    'site_brand': 'Foodgram',
+    'welcome_sign': 'Добро пожаловать в админку Foodgram!',
+    'copyright': 'Foodgram',
+    'search_model': ['recipes.Recipe', 'users.User'],
+    'topmenu_links': [
+        {'name': 'На сайт', 'url': '/', 'new_window': True},
+        {'model': 'auth.User'},
+        {'app': 'recipes'},
     ],
-
-    "usermenu_links": [
-        {"name": "Документация", "url": "https://docs.djangoproject.com/", "new_window": True},
+    'usermenu_links': [
+        {
+            'name': 'Документация',
+            'url': 'https://docs.djangoproject.com/',
+            'new_window': True,
+        },
     ],
-
-    "show_sidebar": True,
-    "navigation_expanded": True,
-    "hide_apps": [],
-    "hide_models": [],
-    "order_with_respect_to": ["auth", "recipes", "users"],
-
-    "icons": {
-        "auth": "fas fa-users-cog",
-        "auth.user": "fas fa-user",
-        "auth.Group": "fas fa-users",
-        "recipes.Recipe": "fas fa-utensils",
-        "users.User": "fas fa-user-circle",
+    'show_sidebar': True,
+    'navigation_expanded': True,
+    'hide_apps': [],
+    'hide_models': [],
+    'order_with_respect_to': ['auth', 'recipes', 'users'],
+    'icons': {
+        'auth': 'fas fa-users-cog',
+        'auth.user': 'fas fa-user',
+        'auth.Group': 'fas fa-users',
+        'recipes.Recipe': 'fas fa-utensils',
+        'users.User': 'fas fa-user-circle',
     },
-
-    "related_modal_active": True,
+    'related_modal_active': True,
 }
 
 JAZZMIN_UI_TWEAKS = {
-    "theme": "flatly",
-    "dark_mode_theme": "darkly",
-    "navbar_small_text": False,
-    "footer_small_text": False,
-    "body_small_text": False,
+    'theme': 'flatly',
+    'dark_mode_theme': 'darkly',
+    'navbar_small_text': False,
+    'footer_small_text': False,
+    'body_small_text': False,
 }
 
 # ================================
