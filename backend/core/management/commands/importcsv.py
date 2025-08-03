@@ -44,7 +44,8 @@ class Command(BaseCommand):
                         )
 
                     for row in csv_reader:
-                        if not all(row.get(field) for field in required_fields):
+                        if not all(row.get(field)
+                                   for field in required_fields):
                             raise ValueError(
                                 f'Invalid row in {file_path}: {row}. '
                                 f'Missing one of {required_fields}.'
