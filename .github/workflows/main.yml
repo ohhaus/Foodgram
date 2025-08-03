@@ -11,9 +11,9 @@ jobs:
             postgres:
                 image: postgres:13
                 env:
-                    POSTGRES_DB=foodgram
-                    POSTGRES_USER=foodgram_user
-                    POSTGRES_PASSWORD=secretpassword
+                    POSTGRES_DB: foodgram
+                    POSTGRES_USER: foodgram_user
+                    POSTGRES_PASSWORD: secretpassword
                 ports:
                     - 5432:5432
                 options: >-
