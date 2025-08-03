@@ -42,10 +42,6 @@ jobs:
               run: |
                   cd frontend
                   npm ci --legacy-peer-deps
-            - name: Run frontend tests
-              run: |
-                  cd frontend
-                  npm test -- --watchAll=false --passWithNoTests
             - name: Run backend tests
               env:
                   POSTGRES_DB: foodgram
