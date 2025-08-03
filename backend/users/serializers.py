@@ -61,7 +61,7 @@ class CustomUserSerializer(UserSerializer):
         read_only_fields = ('id',)
 
     def get_is_subscribed(self, obj):
-        """Проверяет, подписан ли текущий пользователь на данного пользователя."""
+        """Проверяет, подписку на пользователя."""
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             return Follow.objects.filter(

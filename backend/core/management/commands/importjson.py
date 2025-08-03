@@ -11,7 +11,7 @@ FILE_DIR = os.path.join(settings.BASE_DIR, 'data')
 
 
 class Command(BaseCommand):
-    """Команда для импорта данных из JSON файлов (ingredients.json и tags.json) в базу данных."""
+    """Команда для импорта данных из JSON в БД."""
 
     help = 'Imports ingredients and tags from JSON files into the database.'
 
@@ -39,7 +39,8 @@ class Command(BaseCommand):
                     for item in data:
                         if not all(key in item for key in required_fields):
                             raise ValueError(
-                                f'Invalid data in {item} in {file_name}: missing {required_fields}.'
+                                f'Invalid data in {item} in {file_name}: '
+                            f'missing {required_fields}.'
                             )
 
                         defaults = {

@@ -11,7 +11,7 @@ FILE_DIR = os.path.join(settings.BASE_DIR, 'data')
 
 
 class Command(BaseCommand):
-    """Команда для импорта данных из CSV файлов (ingredients.csv и tags.csv) в базу данных."""
+    """Команда для импорта данных из CSV файлов в БД."""
 
     help = 'Imports ingredients and tags from CSV files into the database.'
 
@@ -42,7 +42,8 @@ class Command(BaseCommand):
                             row.get(field) for field in required_fields
                         ):
                             raise ValueError(
-                                f'Invalid data in row {row} in {file_path}: missing {required_fields}.'
+                                f'Invalid data in row {row} in {file_path}: '
+                            f'missing {required_fields}.'
                             )
 
                         defaults = {
