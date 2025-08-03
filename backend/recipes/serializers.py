@@ -248,7 +248,7 @@ class RecipeShortLinkSerializer(serializers.ModelSerializer):
         base_url = (
             request.build_absolute_uri('/').rstrip('/')
             if request
-            else 'https://foodgram.example.org'
+            else 'https://foodgram-ya.myddns.me'
         )
 
         return {'short-link': f'{base_url}/s/{instance.short_link}'}
