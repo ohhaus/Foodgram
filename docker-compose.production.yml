@@ -20,7 +20,7 @@ services:
         image: ohhaus/foodgram_backend:latest
         env_file: .env
         volumes:
-            - static:/app/collectedstatic
+            - static:/app/collected_static
             - media:/app/media
     frontend:
         image: ohhaus/foodgram_frontend:latest
