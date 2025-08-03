@@ -16,69 +16,52 @@ class Command(BaseCommand):
     help = 'Imports ingredients and tags from CSV files into the database.'
 
     def handle(self, *args: Any, **options: Any) -> None:
-        """Обработка команды импорта."""
         files = {
             'ingredients.csv': (Ingredient, ['name', 'measurement_unit']),
             'tags.csv': (Tag, ['name', 'slug']),
         }
 
-        for _file_name, (model, required_fields) in files.items():
+        for file_name, (model, required_fields) in files.items():
+            file_path = os.path.join(FILE_DIR, file_name)
+
             try:
-                file_path = os.path.join(FILE_DIR, 'ingredients.csv')
                 if not os.path.exists(file_path):
                     raise FileNotFoundError(f'File {file_path} not found.')
 
                 with open(file_path, encoding='utf-8') as data_file:
                     csv_reader = csv.DictReader(data_file)
-                    if not set(required_fields).issubset(
-                        csv_reader.fieldnames
-                    ):
+
+                    if not set(required_fields).issubset(csv_reader.fieldnames):
                         raise ValueError(
-                            f'CSV {file_path} must contain {required_fields} columns.'
+                            f'CSV {file_path} must contain columns: {required_fields}.'
                         )
 
                     for row in csv_reader:
-                        if not all(
-                            row.get(field) for field in required_fields
-                        ):
+                        if not all(row.get(field) for field in required_fields):
                             raise ValueError(
-                                f'Invalid data in row {row} in {file_path}: '
-                                f'missing {required_fields}.'
+                                f'Invalid row in {file_path}: {row}. '
+                                f'Missing one of {required_fields}.'
                             )
 
                         defaults = {
                             k: row[k].strip()
-                            for k in required_fields
-                            if k != required_fields[0]
+                            for k in required_fields[1:]
                         }
                         obj, created = model.objects.get_or_create(
-                            **{
-                                required_fields[0]: row[
-                                    required_fields[0]
-                                ].strip()
-                            },
+                            **{required_fields[0]: row[required_fields[0]].strip()},
                             defaults=defaults,
                         )
-                        action = 'Created' if created else 'Already exists'
-                        self.stdout.write(
-                            self.style.SUCCESS(f'{action}: {obj}')
-                        )
 
-                self.stdout.write(
-                    self.style.SUCCESS(
-                        f'File {file_path} imported successfully.'
-                    )
-                )
+                        action = 'Created' if created else 'Already exists'
+                        self.stdout.write(self.style.SUCCESS(f'{action}: {obj}'))
+
+                self.stdout.write(self.style.SUCCESS(f'Imported: {file_path}'))
 
             except FileNotFoundError as e:
                 raise CommandError(f'Файл не найден: {e}') from e
             except csv.Error as e:
-                raise CommandError(
-                    f'Некорректный формат CSV в {file_path}: {e}'
-                ) from e
+                raise CommandError(f'Ошибка CSV в {file_path}: {e}') from e
             except ValueError as e:
                 raise CommandError(f'Недопустимое значение: {e}') from e
             except Exception as e:
-                raise CommandError(
-                    f'Произошла непредвиденная ошибка: {e}'
-                ) from e
+                raise CommandError(f'Непредвиденная ошибка: {e}') from e
