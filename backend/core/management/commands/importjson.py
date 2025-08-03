@@ -40,7 +40,7 @@ class Command(BaseCommand):
                         if not all(key in item for key in required_fields):
                             raise ValueError(
                                 f'Invalid data in {item} in {file_name}: '
-                            f'missing {required_fields}.'
+                                f'missing {required_fields}.'
                             )
 
                         defaults = {

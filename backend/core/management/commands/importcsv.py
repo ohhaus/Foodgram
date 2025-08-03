@@ -43,7 +43,7 @@ class Command(BaseCommand):
                         ):
                             raise ValueError(
                                 f'Invalid data in row {row} in {file_path}: '
-                            f'missing {required_fields}.'
+                                f'missing {required_fields}.'
                             )
 
                         defaults = {
