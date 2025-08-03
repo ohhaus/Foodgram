@@ -59,6 +59,14 @@ class Ingredient(models.Model):
 
 class Recipe(models.Model):
     """Модель рецепта."""
+    
+    short_link = models.CharField(
+        'Короткая ссылка',
+        max_length=10,
+        unique=True,
+        blank=True,
+        null=True
+    )
 
     author = models.ForeignKey(
         User,

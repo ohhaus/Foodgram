@@ -1,4 +1,5 @@
 import base64
+import uuid
 
 from django.core.files.base import ContentFile
 from django.db import transaction
@@ -233,21 +234,19 @@ class RecipeMinifiedSerializer(serializers.ModelSerializer):
 class RecipeShortLinkSerializer(serializers.ModelSerializer):
     """Сериализатор для получения короткой ссылки на рецепт."""
 
-    short_link = serializers.SerializerMethodField(source='short-link')
-
     class Meta:
         model = Recipe
-        fields = ('short_link',)
-
-    def get_short_link(self, obj):
-        request = self.context.get('request')
-        if request:
-            base_url = request.build_absolute_uri('/').rstrip('/')
-            return f'{base_url}/recipes/{obj.short_link}/'
-        return f'/recipes/{obj.short_link}/'
+        fields = []
 
     def to_representation(self, instance):
-        data = super().to_representation(instance)
-        if 'short_link' in data:
-            data['short-link'] = data.pop('short_link')
-        return data
+        if not instance.short_link:
+            # Генерируем короткую ссылку, если её ещё нет
+            instance.short_link = uuid.uuid4().hex[:3]
+            instance.save(update_fields=['short_link'])
+        
+        request = self.context.get('request')
+        base_url = request.build_absolute_uri('/').rstrip('/') if request else 'https://foodgram.example.org'
+        
+        return {
+            'short-link': f'{base_url}/s/{instance.short_link}'
+        }

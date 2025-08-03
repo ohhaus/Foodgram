@@ -18,6 +18,8 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/auth/', include('djoser.urls')),
     path('api/auth/', include('djoser.urls.authtoken')),
+    # Обработка коротких ссылок
+    path('s/<str:short_link>/', RecipeViewSet.as_view({'get': 'get_by_short_link'}), name='recipe-by-short-link'),
 ]
 
 if settings.DEBUG:

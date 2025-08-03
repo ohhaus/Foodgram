@@ -1,4 +1,5 @@
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
@@ -40,7 +41,14 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    """ViewSet для модели Recipe."""
+    """Вьюсет для работы с рецептами."""
+    
+    @action(detail=False, methods=['get'], url_path='s/(?P<short_link>[^/.]+)')
+    def get_by_short_link(self, request, short_link):
+        """Получение рецепта по короткой ссылке."""
+        recipe = get_object_or_404(Recipe, short_link=short_link)
+        serializer = RecipeListSerializer(recipe, context={'request': request})
+        return Response(serializer.data)
 
     queryset = Recipe.objects.all()
     permission_classes = [IsAuthorOrReadOnly]
