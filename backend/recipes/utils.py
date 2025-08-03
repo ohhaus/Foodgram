@@ -15,7 +15,7 @@ def generate_shopping_cart_pdf(recipes):
         rightMargin=72,
         leftMargin=72,
         topMargin=72,
-        bottomMargin=72
+        bottomMargin=72,
     )
 
     # Используем стандартный шрифт Times-Roman
@@ -29,7 +29,7 @@ def generate_shopping_cart_pdf(recipes):
             fontSize=24,
             spaceAfter=30,
             alignment=1,  # По центру
-            leading=30  # Межстрочный интервал
+            leading=30,  # Межстрочный интервал
         ),
         'Normal': ParagraphStyle(
             'Normal',
@@ -37,8 +37,8 @@ def generate_shopping_cart_pdf(recipes):
             fontSize=14,
             spaceAfter=10,
             leftIndent=20,
-            leading=20  # Межстрочный интервал
-        )
+            leading=20,  # Межстрочный интервал
+        ),
     }
 
     # Сбор ингредиентов
@@ -51,7 +51,7 @@ def generate_shopping_cart_pdf(recipes):
 
     # Формирование документа
     story = []
-    
+
     # Заголовок
     story.append(Paragraph('Список покупок', styles['Title']))
     story.append(Spacer(1, 12))
