@@ -2,7 +2,7 @@ import pytest
 from django.urls import reverse
 from rest_framework import status
 
-from recipes.models import Recipe, Tag
+from recipes.models import Recipe
 
 
 @pytest.mark.django_db
