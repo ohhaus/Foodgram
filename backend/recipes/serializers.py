@@ -240,7 +240,6 @@ class RecipeShortLinkSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         if not instance.short_link:
-            # Генерируем короткую ссылку, если её ещё нет
             instance.short_link = uuid.uuid4().hex[:3]
             instance.save(update_fields=['short_link'])
 
