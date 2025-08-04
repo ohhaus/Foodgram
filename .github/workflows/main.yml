@@ -22,22 +22,28 @@ jobs:
                     --health-timeout 5s
                     --health-retries 5
         steps:
-            - uses: actions/checkout@v4
+            - name: Checkout code
+              uses: actions/checkout@v4
+
             - name: Set up Python
               uses: actions/setup-python@v4
               with:
                   python-version: "3.11"
+
             - name: Install flake8
               run: pip install flake8
+
             - name: Run flake8
               run: flake8 backend/
+
             - name: Install dependencies
-              run: |
-                  pip install -r backend/requirements.txt
+              run: pip install -r backend/requirements.txt
+
             - name: Set up Node.js
               uses: actions/setup-node@v4
               with:
                   node-version: "18"
+
             - name: Install frontend dependencies
               run: |
                   cd frontend
@@ -48,32 +54,44 @@ jobs:
         needs: tests
         if: github.ref == 'refs/heads/main'
         steps:
-            - uses: actions/checkout@v4
+            - name: Checkout code
+              uses: actions/checkout@v4
+
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v3
+
             - name: Login to Docker Hub
               uses: docker/login-action@v3
               with:
                   username: ${{ secrets.DOCKER_USERNAME }}
                   password: ${{ secrets.DOCKER_PASSWORD }}
+
             - name: Build and push backend
               uses: docker/build-push-action@v5
               with:
                   context: ./backend
                   push: true
-                  tags: ohhaus/foodgram_backend:${{ github.sha }}
+                  tags: |
+                      ohhaus/foodgram_backend:latest
+                      ohhaus/foodgram_backend:${{ github.sha }}
+
             - name: Build and push frontend
               uses: docker/build-push-action@v5
               with:
                   context: ./frontend
                   push: true
-                  tags: ohhaus/foodgram_frontend:${{ github.sha }}
+                  tags: |
+                      ohhaus/foodgram_frontend:latest
+                      ohhaus/foodgram_frontend:${{ github.sha }}
+
             - name: Build and push gateway
               uses: docker/build-push-action@v5
               with:
                   context: ./nginx
                   push: true
-                  tags: ohhaus/foodgram_gateway:${{ github.sha }}
+                  tags: |
+                      ohhaus/foodgram_gateway:latest
+                      ohhaus/foodgram_gateway:${{ github.sha }}
 
     deploy:
         runs-on: ubuntu-latest
@@ -95,7 +113,7 @@ jobs:
                       sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
                       sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --noinput
                       sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /static/
-                      sudo docker system prune -f
+                      sudo docker image prune -f
 
     send-message:
         runs-on: ubuntu-latest
