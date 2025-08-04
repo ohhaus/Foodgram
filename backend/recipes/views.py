@@ -217,7 +217,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         txt_content = generate_shopping_cart_txt(shopping_cart_recipes)
 
-        response = HttpResponse(txt_content, content_type='text/plain; charset=utf-8')
+        response = HttpResponse(
+            txt_content, content_type='text/plain; charset=utf-8'
+        )
         response['Content-Disposition'] = (
             'attachment; filename="shopping_cart.txt"'
         )

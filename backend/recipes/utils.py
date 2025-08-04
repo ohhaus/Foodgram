@@ -1,8 +1,9 @@
 from collections import defaultdict
 
+
 def generate_shopping_cart_txt(recipes):
     """Генерация TXT-файла со списком покупок."""
-    
+
     ingredients = defaultdict(int)
     for recipe in recipes:
         for recipe_ingredient in recipe.recipe_ingredients.all():
@@ -19,7 +20,6 @@ def generate_shopping_cart_txt(recipes):
     else:
         for ingredient, amount in ingredients.items():
             lines.append(f'• {ingredient}: {amount}')
-    
+
     content = '\n'.join(lines)
     return content
-
