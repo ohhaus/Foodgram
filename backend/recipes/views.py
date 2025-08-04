@@ -17,7 +17,7 @@ from .serializers import (
     RecipeShortLinkSerializer,
     TagSerializer,
 )
-from .utils import generate_shopping_cart_pdf
+from .utils import generate_shopping_cart_txt
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -205,7 +205,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='download_shopping_cart',
     )
     def download_shopping_cart(self, request):
-        """Скачивает список покупок в формате PDF."""
+        """Скачивает список покупок в формате TXT."""
         user = request.user
         shopping_cart_recipes = Recipe.objects.filter(shopping_cart__user=user)
 
@@ -215,10 +215,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        pdf_content = generate_shopping_cart_pdf(shopping_cart_recipes)
+        txt_content = generate_shopping_cart_txt(shopping_cart_recipes)
 
-        response = HttpResponse(pdf_content, content_type='application/pdf')
+        response = HttpResponse(txt_content, content_type='text/plain; charset=utf-8')
         response['Content-Disposition'] = (
-            'attachment; filename="shopping_cart.pdf"'
+            'attachment; filename="shopping_cart.txt"'
         )
         return response
