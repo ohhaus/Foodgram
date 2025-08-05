@@ -34,7 +34,7 @@ class BaseImportCommand(BaseCommand, ABC):
 
                     if not all(k in cleaned_data for k in fields):
                         raise ValueError(
-                            f'Ошибка в {file_path}, поля: {fields} отсутствуют.\n'
+                            f'В {file_path} не хватает полей: {fields}.\n'
                             f'Данные: {item}'
                         )
 
