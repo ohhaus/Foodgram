@@ -6,7 +6,6 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from core.permissions import IsAuthorOrReadOnly
-
 from .filters import IngredientFilter, RecipeFilter
 from .models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from .serializers import (
@@ -57,7 +56,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         """Возвращает подходящий класс сериализатора."""
-        if self.action in ['create', 'update', 'partial_update']:
+        if self.action in ('create', 'update', 'partial_update'):
             return RecipeCreateSerializer
         return RecipeListSerializer
 
