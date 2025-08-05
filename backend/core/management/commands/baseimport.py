@@ -11,7 +11,7 @@ FILE_DIR = os.path.join(settings.BASE_DIR, 'data')
 class BaseImportCommand(BaseCommand, ABC):
     """Базовая команда импорта данных из файлов в БД."""
 
-    help = 'Base class for importing data from files.'
+    help = 'Базовый класс для импорта данных из файлов.'
 
     file_format = ''
     files = {}
@@ -40,7 +40,9 @@ class BaseImportCommand(BaseCommand, ABC):
 
                     obj, created = model.objects.get_or_create(**cleaned_data)
                     action = 'Создан' if created else 'Уже существует'
-                    self.stdout.write(self.style.SUCCESS(f'{action}: {obj}'))
+                    self.stdout.write(
+                        self.style.SUCCESS(f'{action}: {obj}')
+                    )
 
                 self.stdout.write(
                     self.style.SUCCESS(

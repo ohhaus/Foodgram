@@ -43,5 +43,5 @@ def generate_unique_short_code(min_length=6, max_length=10):
             if not ShortLink.objects.filter(short_code=code).exists():
                 return code
     raise ValueError(
-        'Не удалось сгенерировать уникальный код. Пространство кодов исчерпано.'
+        'Пространство кодов исчерпано.'
     )
