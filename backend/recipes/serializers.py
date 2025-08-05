@@ -1,5 +1,6 @@
 import base64
 import logging
+
 from django.core.files.base import ContentFile
 from django.db import transaction
 from django.urls import reverse
@@ -12,12 +13,13 @@ from .models import (
     Recipe,
     RecipeIngredient,
     ShoppingCart,
-    Tag,
     ShortLink,
+    Tag,
 )
 from .utils import generate_unique_short_code
 
 logger = logging.getLogger(__name__)
+
 
 class Base64ImageField(serializers.ImageField):
     def to_internal_value(self, data):
@@ -30,6 +32,7 @@ class Base64ImageField(serializers.ImageField):
 
 class TagSerializer(serializers.ModelSerializer):
     """Сериализатор модели Tag."""
+
     class Meta:
         model = Tag
         fields = ('id', 'name', 'slug')
@@ -37,6 +40,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 class IngredientSerializer(serializers.ModelSerializer):
     """Сериализатор модели Ingredient."""
+
     class Meta:
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit')
@@ -44,6 +48,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
     """Сериализатор модели RecipeIngredient."""
+
     id = serializers.ReadOnlyField(source='ingredient.id')
     name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
@@ -57,6 +62,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
 class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
     """Сериализатор создания ингредиентов в рецепте."""
+
     id = serializers.IntegerField()
     amount = serializers.IntegerField(min_value=1)
 
@@ -67,6 +73,7 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
 
 class ShortLinkSerializer(serializers.ModelSerializer):
     """Сериализатор для короткой ссылки."""
+
     short_link = serializers.SerializerMethodField()
 
     class Meta:
@@ -77,17 +84,24 @@ class ShortLinkSerializer(serializers.ModelSerializer):
     def get_short_link(self, obj):
         request = self.context.get('request')
         if not request:
-            logger.error(f"Request context missing for ShortLinkSerializer, short_code: {obj.short_code}")
+            logger.error(
+                f'Request context missing for ShortLinkSerializer, short_code: {obj.short_code}'
+            )
             return None
         try:
-            return request.build_absolute_uri(reverse('short-link-redirect', args=[obj.short_code]))
+            return request.build_absolute_uri(
+                reverse('short-link-redirect', args=[obj.short_code])
+            )
         except Exception as e:
-            logger.error(f"Error generating short_link for short_code {obj.short_code}: {str(e)}")
+            logger.error(
+                f'Error generating short_link for short_code {obj.short_code}: {str(e)}'
+            )
             return None
 
 
 class RecipeListSerializer(serializers.ModelSerializer):
     """Сериализатор для списка рецептов и детального просмотра."""
+
     tags = TagSerializer(many=True, read_only=True)
     author = CustomUserSerializer(read_only=True)
     ingredients = RecipeIngredientSerializer(
@@ -134,17 +148,22 @@ class RecipeListSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         try:
             short_link = obj.short_link
-            return request.build_absolute_uri(reverse('short-link-redirect', args=[short_link.short_code]))
+            return request.build_absolute_uri(
+                reverse('short-link-redirect', args=[short_link.short_code])
+            )
         except ShortLink.DoesNotExist:
-            logger.error(f"ShortLink does not exist for recipe {obj.id}")
+            logger.error(f'ShortLink does not exist for recipe {obj.id}')
             return None
         except Exception as e:
-            logger.error(f"Error generating short_link for recipe {obj.id}: {str(e)}")
+            logger.error(
+                f'Error generating short_link for recipe {obj.id}: {str(e)}'
+            )
             return None
 
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
     """Сериализатор создания и обновления рецепта."""
+
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True
     )
@@ -207,7 +226,9 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags_data)
         self._create_recipe_ingredients(recipe, ingredients_data)
-        ShortLink.objects.create(recipe=recipe, short_code=generate_unique_short_code())
+        ShortLink.objects.create(
+            recipe=recipe, short_code=generate_unique_short_code()
+        )
         return recipe
 
     @transaction.atomic
@@ -243,6 +264,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
 class RecipeMinifiedSerializer(serializers.ModelSerializer):
     """Сериализатор для краткого представления рецепта."""
+
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
