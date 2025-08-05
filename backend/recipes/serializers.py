@@ -71,13 +71,13 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
 class ShortLinkSerializer(serializers.ModelSerializer):
     """Сериализатор для короткой ссылки."""
 
-    short_url = serializers.SerializerMethodField()
+    short_link = serializers.SerializerMethodField()
 
     class Meta:
         model = ShortLink
-        fields = ('short_url',)
+        fields = ('short_link',)
 
-    def get_short_url(self, obj):
+    def get_short_link(self, obj):
         request = self.context.get('request')
         return request.build_absolute_uri(
             reverse('short-link-redirect', args=[obj.short_code])
@@ -94,7 +94,7 @@ class RecipeListSerializer(serializers.ModelSerializer):
     )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
-    short_url = serializers.SerializerMethodField()
+    short_link = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
@@ -109,7 +109,7 @@ class RecipeListSerializer(serializers.ModelSerializer):
             'image',
             'text',
             'cooking_time',
-            'short_url',
+            'short_link',
         )
 
     def get_is_favorited(self, obj):
@@ -128,7 +128,7 @@ class RecipeListSerializer(serializers.ModelSerializer):
             ).exists()
         return False
 
-    def get_short_url(self, obj):
+    def get_short_link(self, obj):
         request = self.context.get('request')
         try:
             short_link = obj.short_link
