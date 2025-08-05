@@ -85,7 +85,8 @@ class ShortLinkSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if not request:
             logger.error(
-                f'Request context missing for ShortLinkSerializer, short_code: {obj.short_code}'
+                'Отсутствует request в контексте ShortLinkSerializer, '
+                f'код: {obj.short_code}'
             )
             return None
         try:
@@ -94,7 +95,8 @@ class ShortLinkSerializer(serializers.ModelSerializer):
             )
         except Exception as e:
             logger.error(
-                f'Error generating short_link for short_code {obj.short_code}: {str(e)}'
+                f'Ошибка при генерации короткой ссылки для кода '
+                f'{obj.short_code}: {e}'
             )
             return None
 
