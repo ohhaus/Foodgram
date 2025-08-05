@@ -1,8 +1,8 @@
 import base64
-import uuid
 
 from django.core.files.base import ContentFile
 from django.db import transaction
+from django.urls import reverse
 from rest_framework import serializers
 
 from users.serializers import CustomUserSerializer
@@ -12,8 +12,10 @@ from .models import (
     Recipe,
     RecipeIngredient,
     ShoppingCart,
+    ShortLink,
     Tag,
 )
+from .utils import generate_unique_short_code
 
 
 class Base64ImageField(serializers.ImageField):
@@ -66,6 +68,22 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
         fields = ('id', 'amount')
 
 
+class ShortLinkSerializer(serializers.ModelSerializer):
+    """Сериализатор для короткой ссылки."""
+
+    short_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ShortLink
+        fields = ('short_url',)
+
+    def get_short_url(self, obj):
+        request = self.context.get('request')
+        return request.build_absolute_uri(
+            reverse('short-link-redirect', args=[obj.short_code])
+        )
+
+
 class RecipeListSerializer(serializers.ModelSerializer):
     """Сериализатор для списка рецептов и детального просмотра."""
 
@@ -76,6 +94,7 @@ class RecipeListSerializer(serializers.ModelSerializer):
     )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
+    short_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
@@ -90,10 +109,10 @@ class RecipeListSerializer(serializers.ModelSerializer):
             'image',
             'text',
             'cooking_time',
+            'short_url',
         )
 
     def get_is_favorited(self, obj):
-        """Check if recipe is in user's favorites."""
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             return Favorite.objects.filter(
@@ -102,7 +121,6 @@ class RecipeListSerializer(serializers.ModelSerializer):
         return False
 
     def get_is_in_shopping_cart(self, obj):
-        """Check if recipe is in user's shopping cart."""
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             return ShoppingCart.objects.filter(
@@ -110,9 +128,19 @@ class RecipeListSerializer(serializers.ModelSerializer):
             ).exists()
         return False
 
+    def get_short_url(self, obj):
+        request = self.context.get('request')
+        try:
+            short_link = obj.short_link
+            return request.build_absolute_uri(
+                reverse('short-link-redirect', args=[short_link.short_code])
+            )
+        except ShortLink.DoesNotExist:
+            return None
+
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
-    """Сериализатор создания и обновлени рецепта."""
+    """Сериализатор создания и обновления рецепта."""
 
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True
@@ -136,25 +164,21 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'Необходимо указать хотя бы один ингредиент.'
             )
-
         ingredient_ids = [item['id'] for item in value]
         if len(ingredient_ids) != len(set(ingredient_ids)):
             raise serializers.ValidationError(
                 'Ингредиенты не должны повторяться.'
             )
-
         existing_ingredients = Ingredient.objects.filter(id__in=ingredient_ids)
         if len(existing_ingredients) != len(ingredient_ids):
             raise serializers.ValidationError(
                 'Один или несколько ингредиентов не существуют.'
             )
-
         for item in value:
             if item.get('amount', 0) < 1:
                 raise serializers.ValidationError(
                     'Количество ингредиента должно быть больше 0.'
                 )
-
         return value
 
     def validate_tags(self, value):
@@ -162,10 +186,8 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'Необходимо указать хотя бы один тег.'
             )
-
         if len(value) != len(set(value)):
             raise serializers.ValidationError('Теги не должны повторяться.')
-
         return value
 
     def validate_cooking_time(self, value):
@@ -179,30 +201,26 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         ingredients_data = validated_data.pop('ingredients')
         tags_data = validated_data.pop('tags')
-
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags_data)
-
         self._create_recipe_ingredients(recipe, ingredients_data)
-
+        ShortLink.objects.create(
+            recipe=recipe, short_code=generate_unique_short_code()
+        )
         return recipe
 
     @transaction.atomic
     def update(self, instance, validated_data):
         ingredients_data = validated_data.pop('ingredients', None)
         tags_data = validated_data.pop('tags', None)
-
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
-
         if tags_data is not None:
             instance.tags.set(tags_data)
-
         if ingredients_data is not None:
             instance.recipe_ingredients.all().delete()
             self._create_recipe_ingredients(instance, ingredients_data)
-
         return instance
 
     def _create_recipe_ingredients(self, recipe, ingredients_data):
@@ -228,25 +246,3 @@ class RecipeMinifiedSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
-
-
-class RecipeShortLinkSerializer(serializers.ModelSerializer):
-    """Сериализатор для получения короткой ссылки на рецепт."""
-
-    class Meta:
-        model = Recipe
-        fields = []
-
-    def to_representation(self, instance):
-        if not instance.short_link:
-            instance.short_link = uuid.uuid4().hex[:3]
-            instance.save(update_fields=['short_link'])
-
-        request = self.context.get('request')
-        base_url = (
-            request.build_absolute_uri('/').rstrip('/')
-            if request
-            else 'https://foodgram-ya.myddns.me'
-        )
-
-        return {'short-link': f'{base_url}/s/{instance.short_link}'}

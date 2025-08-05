@@ -1,10 +1,15 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 from rest_framework.routers import DefaultRouter
 
-from recipes.views import IngredientViewSet, RecipeViewSet, TagViewSet
+from recipes.views import (
+    IngredientViewSet,
+    RecipeViewSet,
+    TagViewSet,
+    short_link_redirect,
+)
 from users.views import UserViewSet
 
 router = DefaultRouter()
@@ -18,10 +23,10 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/auth/', include('djoser.urls')),
     path('api/auth/', include('djoser.urls.authtoken')),
-    path(
-        's/<str:short_link>/',
-        RecipeViewSet.as_view({'get': 'get_by_short_link'}),
-        name='recipe-by-short-link',
+    re_path(
+        r'^s/(?P<short_code>[^/.]+)/$',
+        short_link_redirect,
+        name='short-link-redirect',
     ),
 ]
 

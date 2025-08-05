@@ -1,5 +1,3 @@
-import uuid
-
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -60,10 +58,6 @@ class Ingredient(models.Model):
 class Recipe(models.Model):
     """Модель рецепта."""
 
-    short_link = models.CharField(
-        'Короткая ссылка', max_length=10, unique=True, blank=True, null=True
-    )
-
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -102,12 +96,6 @@ class Recipe(models.Model):
         'Дата публикации',
         auto_now_add=True,
     )
-    short_link = models.UUIDField(
-        'Короткая ссылка',
-        default=uuid.uuid4,
-        unique=True,
-        editable=False,
-    )
 
     class Meta:
         verbose_name = 'Рецепт'
@@ -116,6 +104,38 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ShortLink(models.Model):
+    """Модель короткой ссылки."""
+
+    recipe = models.OneToOneField(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='short_link',
+        verbose_name='Рецепт',
+    )
+    short_code = models.CharField(
+        'Короткий код',
+        max_length=10,
+        unique=True,
+        db_index=True,
+    )
+    created_at = models.DateTimeField(
+        'Дата создания',
+        auto_now_add=True,
+    )
+
+    class Meta:
+        verbose_name = 'Короткая ссылка'
+        verbose_name_plural = 'Короткие ссылки'
+
+    def __str__(self):
+        return f'Короткая ссылка для {self.recipe.name}: {self.short_code}'
+
+    @property
+    def full_url(self):
+        return f'/s/{self.short_code}'
 
 
 class RecipeIngredient(models.Model):

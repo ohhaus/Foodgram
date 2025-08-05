@@ -1,19 +1,20 @@
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions, status, viewsets
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 
 from core.permissions import IsAuthorOrReadOnly
 from .filters import IngredientFilter, RecipeFilter
-from .models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
+from .models import Favorite, Ingredient, Recipe, ShoppingCart, ShortLink, Tag
 from .serializers import (
     IngredientSerializer,
     RecipeCreateSerializer,
     RecipeListSerializer,
     RecipeMinifiedSerializer,
-    RecipeShortLinkSerializer,
+    ShortLinkSerializer,
     TagSerializer,
 )
 from .utils import generate_shopping_cart_txt
@@ -42,13 +43,6 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     """Вьюсет для работы с рецептами."""
 
-    @action(detail=False, methods=['get'], url_path='s/(?P<short_link>[^/.]+)')
-    def get_by_short_link(self, request, short_link):
-        """Получение рецепта по короткой ссылке."""
-        recipe = get_object_or_404(Recipe, short_link=short_link)
-        serializer = RecipeListSerializer(recipe, context={'request': request})
-        return Response(serializer.data)
-
     queryset = Recipe.objects.all()
     permission_classes = [IsAuthorOrReadOnly]
     filter_backends = [DjangoFilterBackend]
@@ -72,7 +66,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         """Обновляет рецепт с валидацией."""
         partial = kwargs.pop('partial', False)
-
         if not partial:
             required_fields = [
                 'ingredients',
@@ -86,7 +79,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             for field in required_fields:
                 if field not in request.data:
                     missing_fields.append(field)
-
             if missing_fields:
                 error_dict = {}
                 for field in missing_fields:
@@ -95,7 +87,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     else:
                         error_dict[field] = ['Это поле обязательно.']
                 return Response(error_dict, status=status.HTTP_400_BAD_REQUEST)
-
         return super().update(request, *args, **kwargs)
 
     def perform_create(self, serializer):
@@ -120,10 +111,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_link(self, request, pk=None):
         """Получает короткую ссылку на рецепт."""
         recipe = self.get_object()
-        serializer = RecipeShortLinkSerializer(
-            recipe, context={'request': request}
-        )
-        return Response(serializer.data)
+        try:
+            short_link = recipe.short_link
+            serializer = ShortLinkSerializer(
+                short_link, context={'request': request}
+            )
+            return Response(serializer.data)
+        except ShortLink.DoesNotExist:
+            return Response(
+                {'errors': 'Короткая ссылка не найдена'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
     @action(
         detail=True,
@@ -134,7 +132,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Добавляет или удаляет рецепт из избранного."""
         recipe = self.get_object()
         user = request.user
-
         if request.method == 'POST':
             favorite, created = Favorite.objects.get_or_create(
                 user=user, recipe=recipe
@@ -144,10 +141,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     {'errors': 'Рецепт уже добавлен в избранное'},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-
             serializer = RecipeMinifiedSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-
         elif request.method == 'DELETE':
             favorite = Favorite.objects.filter(
                 user=user, recipe=recipe
@@ -157,7 +152,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     {'errors': 'Рецепт не найден в избранном'},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-
             favorite.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -170,7 +164,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Добавляет или удаляет рецепт из списка покупок."""
         recipe = self.get_object()
         user = request.user
-
         if request.method == 'POST':
             cart_item, created = ShoppingCart.objects.get_or_create(
                 user=user, recipe=recipe
@@ -180,10 +173,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     {'errors': 'Рецепт уже добавлен в список покупок'},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-
             serializer = RecipeMinifiedSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-
         elif request.method == 'DELETE':
             cart_item = ShoppingCart.objects.filter(
                 user=user, recipe=recipe
@@ -193,7 +184,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     {'errors': 'Рецепт не найден в списке покупок'},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-
             cart_item.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -207,15 +197,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Скачивает список покупок в формате TXT."""
         user = request.user
         shopping_cart_recipes = Recipe.objects.filter(shopping_cart__user=user)
-
         if not shopping_cart_recipes.exists():
             return Response(
                 {'errors': 'Список покупок пуст'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
         txt_content = generate_shopping_cart_txt(shopping_cart_recipes)
-
         response = HttpResponse(
             txt_content, content_type='text/plain; charset=utf-8'
         )
@@ -223,3 +210,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'attachment; filename="shopping_cart.txt"'
         )
         return response
+
+
+@api_view(['GET'])
+def short_link_redirect(request, short_code):
+    """Перенаправляет на страницу рецепта по короткому коду."""
+    short_link = get_object_or_404(ShortLink, short_code=short_code)
+    recipe = short_link.recipe
+    return redirect(reverse('recipes-detail', args=[recipe.id]))

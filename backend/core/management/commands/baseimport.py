@@ -5,7 +5,6 @@ from typing import Any
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-
 FILE_DIR = os.path.join(settings.BASE_DIR, 'data')
 
 
@@ -44,11 +43,15 @@ class BaseImportCommand(BaseCommand, ABC):
                     self.stdout.write(self.style.SUCCESS(f'{action}: {obj}'))
 
                 self.stdout.write(
-                    self.style.SUCCESS(f'✅ Импорт успешно завершён: {file_path}')
+                    self.style.SUCCESS(
+                        f'✅ Импорт успешно завершён: {file_path}'
+                    )
                 )
 
             except Exception as e:
-                raise CommandError(f'⛔ Ошибка при обработке {file_path}: {e}') from e
+                raise CommandError(
+                    f'⛔ Ошибка при обработке {file_path}: {e}'
+                ) from e
 
     @abstractmethod
     def load_data(self, file_path: str) -> list[dict[str, Any]]:
