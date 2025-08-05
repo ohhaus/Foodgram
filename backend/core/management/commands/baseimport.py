@@ -33,11 +33,11 @@ class BaseImportCommand(BaseCommand, ABC):
                     }
 
                     if not all(k in cleaned_data for k in fields):
-                        message = (
-                            f'Ошибка в {file_path}, отсутствуют поля: {fields}. '
-                            f'Данные: {item}'
+                        raise ValueError(
+                            'Ошибка в {}, отсутствуют поля: {}.\nДанные: {}'.format(
+                                file_path, fields, item
+                            )
                         )
-                        raise ValueError(message)
 
                     obj, created = model.objects.get_or_create(**cleaned_data)
                     action = 'Создан' if created else 'Уже существует'
