@@ -221,11 +221,5 @@ class RecipeViewSet(viewsets.ModelViewSet):
 @api_view(['GET'])
 def short_link_redirect(request, short_code):
     """Перенаправляет на страницу рецепта по короткому коду."""
-    try:
-        short_link = get_object_or_404(ShortLink, short_code=short_code)
-        return redirect(reverse('recipes-detail', args=[short_link.recipe.id]))
-    except Exception as e:
-        return Response(
-            {'error': 'Внутренняя ошибка сервера'},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+    short_link = get_object_or_404(ShortLink, short_code=short_code)
+    return redirect(reverse('recipes-detail', args=[short_link.recipe.id]))

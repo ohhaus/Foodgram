@@ -101,7 +101,6 @@ class ShortLinkSerializer(serializers.ModelSerializer):
             return None
 
     def to_representation(self, instance):
-        """Преобразует short_link в short-link для соответствия спецификации API"""
         data = super().to_representation(instance)
         return {'short-link': data['short_link']}
 
@@ -169,7 +168,6 @@ class RecipeListSerializer(serializers.ModelSerializer):
             return None
 
     def to_representation(self, instance):
-        """Преобразует short_link в short-link для соответствия спецификации API"""
         representation = super().to_representation(instance)
         representation['short-link'] = representation.pop('short_link')
         return representation
