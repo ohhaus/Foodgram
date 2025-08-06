@@ -1,5 +1,4 @@
 import base64
-import logging
 
 from django.core.files.base import ContentFile
 from django.db import transaction
@@ -17,8 +16,6 @@ from .models import (
     Tag,
 )
 from .utils import generate_unique_short_code
-
-logger = logging.getLogger(__name__)
 
 
 class Base64ImageField(serializers.ImageField):

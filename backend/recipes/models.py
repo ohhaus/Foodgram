@@ -1,7 +1,18 @@
-from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+from core.constants import (
+    COOKING_TIME_MAX_VALUE,
+    COOKING_TIME_MIN_VALUE,
+    INGREDIENT_MEASUREMENT_UNIT_MAX_LENGTH,
+    INGREDIENT_NAME_MAX_LENGTH,
+    RECIPE_INGREDIENT_AMOUNT_MAX_VALUE,
+    RECIPE_INGREDIENT_AMOUNT_MIN_VALUE,
+    RECIPE_NAME_MAX_LENGTH,
+    RECIPE_TEXT_MAX_LENGTH,
+    TAG_NAME_MAX_LENGTH,
+    TAG_SLUG_MAX_LENGTH,
+)
 from users.models import User
 
 
@@ -10,12 +21,12 @@ class Tag(models.Model):
 
     name = models.CharField(
         'Название',
-        max_length=settings.TAG_NAME_MAX_LENGTH,
+        max_length=TAG_NAME_MAX_LENGTH,
         unique=True,
     )
     slug = models.SlugField(
         'Слаг',
-        max_length=settings.TAG_SLUG_MAX_LENGTH,
+        max_length=TAG_SLUG_MAX_LENGTH,
         unique=True,
     )
 
@@ -33,11 +44,11 @@ class Ingredient(models.Model):
 
     name = models.CharField(
         'Название',
-        max_length=settings.INGREDIENT_NAME_MAX_LENGTH,
+        max_length=INGREDIENT_NAME_MAX_LENGTH,
     )
     measurement_unit = models.CharField(
         'Единица измерения',
-        max_length=settings.INGREDIENT_MEASUREMENT_UNIT_MAX_LENGTH,
+        max_length=INGREDIENT_MEASUREMENT_UNIT_MAX_LENGTH,
     )
 
     class Meta:
@@ -66,7 +77,7 @@ class Recipe(models.Model):
     )
     name = models.CharField(
         'Название',
-        max_length=settings.RECIPE_NAME_MAX_LENGTH,
+        max_length=RECIPE_NAME_MAX_LENGTH,
     )
     image = models.ImageField(
         'Изображение',
@@ -74,7 +85,7 @@ class Recipe(models.Model):
     )
     text = models.TextField(
         'Описание',
-        max_length=settings.RECIPE_TEXT_MAX_LENGTH,
+        max_length=RECIPE_TEXT_MAX_LENGTH,
     )
     ingredients = models.ManyToManyField(
         Ingredient,
@@ -88,8 +99,8 @@ class Recipe(models.Model):
     cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления (в минутах)',
         validators=[
-            MinValueValidator(settings.COOKING_TIME_MIN_VALUE),
-            MaxValueValidator(settings.COOKING_TIME_MAX_VALUE),
+            MinValueValidator(COOKING_TIME_MIN_VALUE),
+            MaxValueValidator(COOKING_TIME_MAX_VALUE),
         ],
     )
     pub_date = models.DateTimeField(
@@ -156,8 +167,8 @@ class RecipeIngredient(models.Model):
     amount = models.PositiveSmallIntegerField(
         'Количество',
         validators=[
-            MinValueValidator(settings.RECIPE_INGREDIENT_AMOUNT_MIN_VALUE),
-            MaxValueValidator(settings.RECIPE_INGREDIENT_AMOUNT_MAX_VALUE),
+            MinValueValidator(RECIPE_INGREDIENT_AMOUNT_MIN_VALUE),
+            MaxValueValidator(RECIPE_INGREDIENT_AMOUNT_MAX_VALUE),
         ],
     )
 
