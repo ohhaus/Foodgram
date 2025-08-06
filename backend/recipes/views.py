@@ -17,7 +17,7 @@ from .serializers import (
     ShortLinkSerializer,
     TagSerializer,
 )
-from .utils import generate_shopping_cart_txt
+from .utils import generate_shopping_cart_txt, generate_unique_short_code
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -95,7 +95,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Возвращает оптимизированный набор запросов."""
-        return Recipe.objects.select_related('author').prefetch_related(
+        return Recipe.objects.select_related(
+            'author',
+            'short_link',
+        ).prefetch_related(
             'tags',
             'recipe_ingredients__ingredient',
             'favorites',
@@ -118,10 +121,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
             )
             return Response(serializer.data)
         except ShortLink.DoesNotExist:
-            return Response(
-                {'errors': 'Короткая ссылка не найдена'},
-                status=status.HTTP_404_NOT_FOUND,
+            short_link = ShortLink.objects.create(
+                recipe=recipe, short_code=generate_unique_short_code()
             )
+            serializer = ShortLinkSerializer(
+                short_link, context={'request': request}
+            )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(
         detail=True,
@@ -215,6 +221,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
 @api_view(['GET'])
 def short_link_redirect(request, short_code):
     """Перенаправляет на страницу рецепта по короткому коду."""
-    short_link = get_object_or_404(ShortLink, short_code=short_code)
-    recipe = short_link.recipe
-    return redirect(reverse('recipes-detail', args=[recipe.id]))
+    try:
+        short_link = get_object_or_404(ShortLink, short_code=short_code)
+        return redirect(reverse('recipes-detail', args=[short_link.recipe.id]))
+    except Exception as e:
+        return Response(
+            {'error': 'Внутренняя ошибка сервера'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )

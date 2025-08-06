@@ -40,9 +40,7 @@ class BaseImportCommand(BaseCommand, ABC):
 
                     obj, created = model.objects.get_or_create(**cleaned_data)
                     action = 'Создан' if created else 'Уже существует'
-                    self.stdout.write(
-                        self.style.SUCCESS(f'{action}: {obj}')
-                    )
+                    self.stdout.write(self.style.SUCCESS(f'{action}: {obj}'))
 
                 self.stdout.write(
                     self.style.SUCCESS(

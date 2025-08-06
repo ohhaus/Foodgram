@@ -7,6 +7,7 @@ from django.urls import reverse
 from rest_framework import serializers
 
 from users.serializers import CustomUserSerializer
+
 from .models import (
     Favorite,
     Ingredient,
@@ -78,8 +79,7 @@ class ShortLinkSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ShortLink
-        fields = ('short-link',)
-        extra_kwargs = {'short-link': {'source': 'short_link'}}
+        fields = ('short_link',)
 
     def get_short_link(self, obj):
         request = self.context.get('request')
@@ -99,6 +99,11 @@ class ShortLinkSerializer(serializers.ModelSerializer):
                 f'{obj.short_code}: {e}'
             )
             return None
+
+    def to_representation(self, instance):
+        """Преобразует short_link в short-link для соответствия спецификации API"""
+        data = super().to_representation(instance)
+        return {'short-link': data['short_link']}
 
 
 class RecipeListSerializer(serializers.ModelSerializer):
@@ -126,9 +131,8 @@ class RecipeListSerializer(serializers.ModelSerializer):
             'image',
             'text',
             'cooking_time',
-            'short-link',
+            'short_link',
         )
-        extra_kwargs = {'short-link': {'source': 'short_link'}}
 
     def get_is_favorited(self, obj):
         request = self.context.get('request')
@@ -148,6 +152,8 @@ class RecipeListSerializer(serializers.ModelSerializer):
 
     def get_short_link(self, obj):
         request = self.context.get('request')
+        if not request:
+            return None
         try:
             short_link = obj.short_link
             return request.build_absolute_uri(
@@ -161,6 +167,12 @@ class RecipeListSerializer(serializers.ModelSerializer):
                 f'Error generating short_link for recipe {obj.id}: {str(e)}'
             )
             return None
+
+    def to_representation(self, instance):
+        """Преобразует short_link в short-link для соответствия спецификации API"""
+        representation = super().to_representation(instance)
+        representation['short-link'] = representation.pop('short_link')
+        return representation
 
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
@@ -228,8 +240,9 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags_data)
         self._create_recipe_ingredients(recipe, ingredients_data)
-        ShortLink.objects.create(
-            recipe=recipe, short_code=generate_unique_short_code()
+        ShortLink.objects.get_or_create(
+            recipe=recipe,
+            defaults={'short_code': generate_unique_short_code()},
         )
         return recipe
 
