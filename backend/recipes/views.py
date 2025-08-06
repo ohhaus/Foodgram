@@ -222,4 +222,4 @@ class RecipeViewSet(viewsets.ModelViewSet):
 def short_link_redirect(request, short_code):
     """Перенаправляет на страницу рецепта по короткому коду."""
     short_link = get_object_or_404(ShortLink, short_code=short_code)
-    return redirect(reverse('recipes-detail', args=[short_link.recipe.id]))
+    return redirect(f'https://foodgram-ya.myddns.me/recipes/{short_link.recipe.id}')

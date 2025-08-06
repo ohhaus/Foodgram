@@ -83,22 +83,12 @@ class ShortLinkSerializer(serializers.ModelSerializer):
 
     def get_short_link(self, obj):
         request = self.context.get('request')
-        if not request:
-            logger.error(
-                'Отсутствует request в контексте ShortLinkSerializer, '
-                f'код: {obj.short_code}'
-            )
+        if request is None:
             return None
-        try:
-            return request.build_absolute_uri(
-                reverse('short-link-redirect', args=[obj.short_code])
-            )
-        except Exception as e:
-            logger.error(
-                f'Ошибка при генерации короткой ссылки для кода '
-                f'{obj.short_code}: {e}'
-            )
-            return None
+            
+        return request.build_absolute_uri(
+            reverse('short-link-redirect', args=[obj.short_code])
+        )
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -151,21 +141,16 @@ class RecipeListSerializer(serializers.ModelSerializer):
 
     def get_short_link(self, obj):
         request = self.context.get('request')
-        if not request:
+        if request is None or not hasattr(obj, 'short_link'):
             return None
-        try:
-            short_link = obj.short_link
-            return request.build_absolute_uri(
-                reverse('short-link-redirect', args=[short_link.short_code])
-            )
-        except ShortLink.DoesNotExist:
-            logger.error(f'ShortLink does not exist for recipe {obj.id}')
+            
+        short_link = obj.short_link
+        if short_link is None:
             return None
-        except Exception as e:
-            logger.error(
-                f'Error generating short_link for recipe {obj.id}: {str(e)}'
-            )
-            return None
+            
+        return request.build_absolute_uri(
+            reverse('short-link-redirect', args=[short_link.short_code])
+        )
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
