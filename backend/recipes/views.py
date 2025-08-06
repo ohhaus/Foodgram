@@ -1,6 +1,5 @@
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action, api_view
@@ -222,4 +221,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
 def short_link_redirect(request, short_code):
     """Перенаправляет на страницу рецепта по короткому коду."""
     short_link = get_object_or_404(ShortLink, short_code=short_code)
-    return redirect(f'https://foodgram-ya.myddns.me/recipes/{short_link.recipe.id}')
+    return redirect(
+        f'https://foodgram-ya.myddns.me/recipes/{short_link.recipe.id}'
+    )

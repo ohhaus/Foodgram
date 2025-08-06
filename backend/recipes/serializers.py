@@ -7,7 +7,6 @@ from django.urls import reverse
 from rest_framework import serializers
 
 from users.serializers import CustomUserSerializer
-
 from .models import (
     Favorite,
     Ingredient,
@@ -85,7 +84,7 @@ class ShortLinkSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request is None:
             return None
-            
+
         return request.build_absolute_uri(
             reverse('short-link-redirect', args=[obj.short_code])
         )
@@ -143,11 +142,11 @@ class RecipeListSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request is None or not hasattr(obj, 'short_link'):
             return None
-            
+
         short_link = obj.short_link
         if short_link is None:
             return None
-            
+
         return request.build_absolute_uri(
             reverse('short-link-redirect', args=[short_link.short_code])
         )
