@@ -25,9 +25,9 @@ class RecipeFilter(django_filters.FilterSet):
         """Фильтрация рецептов по избранному."""
         if not self.request.user.is_authenticated:
             return queryset
-        if value in ['1', 'true', 'True']:
+        if value in ('1', 'true', 'True'):
             return queryset.filter(favorites__user=self.request.user)
-        elif value in ['0', 'false', 'False']:
+        elif value in ('0', 'false', 'False'):
             return queryset.exclude(favorites__user=self.request.user)
         return queryset
 
@@ -35,9 +35,9 @@ class RecipeFilter(django_filters.FilterSet):
         """Фильтрация рецептов по списку покупок."""
         if not self.request.user.is_authenticated:
             return queryset
-        if value in ['1', 'true', 'True']:
+        if value in ('1', 'true', 'True'):
             return queryset.filter(shopping_cart__user=self.request.user)
-        elif value in ['0', 'false', 'False']:
+        elif value in ('0', 'false', 'False'):
             return queryset.exclude(shopping_cart__user=self.request.user)
         return queryset
 
@@ -49,7 +49,7 @@ class IngredientFilter(django_filters.FilterSet):
 
     class Meta:
         model = Ingredient
-        fields = ['name']
+        fields = ('name',)
 
     def filter_name(self, queryset, name, value):
         """Фитрация ингредиентов по имени."""
