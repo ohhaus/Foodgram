@@ -61,6 +61,20 @@ https://foodgram-ya.myddns.me/
 
 Проект будет доступен по адресу http://localhost:8000
 
+## Импорт данных 
+
+Проект включает универсальную систему импорта данных:
+```bash
+# Импорт всех данных (ингредиенты и теги)
+docker compose exec backend python manage.py importdata
+
+# Импорт только ингредиентов
+docker compose exec backend python manage.py importdata --file=ingredients.json
+
+# Импорт только тегов
+docker compose exec backend python manage.py importdata --file=tags.csv
+```
+
 ## 🌐 Развертывание 
 
 Для развертывания на сервере используйте docker-compose.production.yml. Не забудьте:
