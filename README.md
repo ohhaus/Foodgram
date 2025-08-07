@@ -64,16 +64,16 @@ https://foodgram-ya.myddns.me/
 ## Импорт данных 
 
 Проект включает универсальную систему импорта данных:
-```bash
-# Импорт всех данных (ингредиенты и теги)
-docker compose exec backend python manage.py importdata
+    ```bash
+    # Импорт всех данных (ингредиенты и теги)
+    docker compose exec backend python manage.py importdata
 
-# Импорт только ингредиентов
-docker compose exec backend python manage.py importdata --file=ingredients.json
+    # Импорт только ингредиентов
+    docker compose exec backend python manage.py importdata --file=ingredients.json
 
-# Импорт только тегов
-docker compose exec backend python manage.py importdata --file=tags.csv
-```
+    # Импорт только тегов
+    docker compose exec backend python manage.py importdata --file=tags.csv
+    ```
 
 ## 🌐 Развертывание 
 
