@@ -81,5 +81,5 @@ class BaseImportCommand(BaseCommand, ABC):
 
     @abstractmethod
     def load_data(self, file_path: str) -> list[dict[str, Any]]:
-        """Загрузка данных из файла (должен быть реализован в дочерних классах)."""
+        """Загрузка данных из файла."""
         raise NotImplementedError

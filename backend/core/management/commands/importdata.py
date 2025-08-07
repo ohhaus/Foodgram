@@ -18,7 +18,7 @@ class Command(BaseImportCommand):
     }
 
     def load_data(self, file_path: str) -> list[dict]:
-        """Определяет формат файла и загружает данные соответствующим способом."""
+        """Определяет формат файла и загружает данные."""
         if file_path.endswith('.csv'):
             return self.load_csv(file_path)
         elif file_path.endswith('.json'):
