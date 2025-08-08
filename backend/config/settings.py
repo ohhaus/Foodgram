@@ -206,7 +206,7 @@ JAZZMIN_SETTINGS = {
 }
 
 JAZZMIN_UI_TWEAKS = {
-    'theme': 'flatly',
+    'theme': 'darkly',
     'dark_mode_theme': 'darkly',
     'navbar_small_text': False,
     'footer_small_text': False,

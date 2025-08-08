@@ -158,7 +158,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         queryset=Tag.objects.all(), many=True
     )
     ingredients = RecipeIngredientCreateSerializer(many=True)
-    image = Base64ImageField()
+    image = Base64ImageField(required=False)
 
     class Meta:
         model = Recipe
@@ -170,6 +170,14 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             'text',
             'cooking_time',
         )
+
+    def validate(self, data):
+        """Проверяем наличие изображения только при создании рецепта."""
+        if self.instance is None and 'image' not in data:
+            raise serializers.ValidationError(
+                {'image': 'Изображение обязательно при создании рецепта'}
+            )
+        return data
 
     def validate_ingredients(self, value):
         if not value:
