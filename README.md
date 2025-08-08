@@ -68,11 +68,14 @@ https://foodgram-ya.myddns.me/
     # Импорт всех данных (ингредиенты и теги)
     docker compose exec backend python manage.py importdata
 
-    # Импорт только ингредиентов
-    docker compose exec backend python manage.py importdata --file=ingredients.json
+    # Импорт только json файлов
+    docker compose exec backend python manage.py importdata --format=json
 
-    # Импорт только тегов
-    docker compose exec backend python manage.py importdata --file=tags.csv
+    # Импорт только csv файлов
+    docker compose exec backend python manage.py importdata --format=csv
+
+    # Импорт только конкретных файлов
+    docker compose exec backend python manage.py importdata --files ingredients.json tags.csv
     ```
 
 ## 🌐 Развертывание 
