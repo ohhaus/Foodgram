@@ -81,7 +81,6 @@ class ShortLinkSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request is None:
             return None
-
         return request.build_absolute_uri(
             reverse('short-link-redirect', args=[obj.short_code])
         )
@@ -139,11 +138,9 @@ class RecipeListSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request is None or not hasattr(obj, 'short_link'):
             return None
-
         short_link = obj.short_link
         if short_link is None:
             return None
-
         return request.build_absolute_uri(
             reverse('short-link-redirect', args=[short_link.short_code])
         )
@@ -229,6 +226,8 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         ingredients_data = validated_data.pop('ingredients', None)
         tags_data = validated_data.pop('tags', None)
+        if 'image' not in validated_data:
+            validated_data['image'] = instance.image
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
