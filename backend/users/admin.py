@@ -1,8 +1,14 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import Group
+from rest_framework.authtoken.models import Token
 from django.utils.translation import gettext_lazy as _
 
 from .models import Follow, User
+
+
+admin.site.unregister(Group)
+admin.site.unregister(Token)
 
 
 @admin.register(User)
