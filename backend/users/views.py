@@ -99,7 +99,7 @@ class UserViewSet(DjoserUserViewSet):
         except ValueError:
             return Response(
                 {'errors': 'Неверный ID пользователя'},
-                status=status.HTTP_404_NOT_FOUND,
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         if user == author:
@@ -117,7 +117,6 @@ class UserViewSet(DjoserUserViewSet):
                     {'errors': 'Вы уже подписаны на этого пользователя'},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-
             serializer = SubscriptionSerializer(
                 author, context={'request': request}
             )
@@ -130,6 +129,5 @@ class UserViewSet(DjoserUserViewSet):
                     {'errors': 'Вы не подписаны на этого пользователя'},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-
             follow.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)

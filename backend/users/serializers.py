@@ -80,11 +80,13 @@ class SetAvatarSerializer(serializers.ModelSerializer):
         fields = ('avatar',)
 
 
-class SubscriptionSerializer(CustomUserSerializer):
+class SubscriptionSerializer(serializers.ModelSerializer):
     """Сериализатор для подписок пользователя с рецептами."""
 
+    is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
+    avatar = Base64ImageField(required=False, allow_null=True)
 
     class Meta:
         model = User
@@ -95,11 +97,20 @@ class SubscriptionSerializer(CustomUserSerializer):
             'first_name',
             'last_name',
             'is_subscribed',
+            'avatar',
             'recipes',
             'recipes_count',
-            'avatar',
         )
         read_only_fields = ('id',)
+
+    def get_is_subscribed(self, obj):
+        """Проверяет, подписку на пользователя."""
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return Follow.objects.filter(
+                user=request.user, author=obj
+            ).exists()
+        return False
 
     def get_recipes(self, obj):
         """Получает рецепты пользователя с учетом лимита."""

@@ -1,11 +1,11 @@
 import csv
 import json
 import os
-from typing import Dict, Type
 
-from core.management.commands.baseimport import BaseImportCommand, FILE_DIR
-from django.core.management.base import CommandParser, CommandError
+from django.core.management.base import CommandError, CommandParser
 from django.db import models
+
+from core.management.commands.baseimport import FILE_DIR, BaseImportCommand
 from recipes.models import Ingredient, Tag
 
 
@@ -14,7 +14,7 @@ class Command(BaseImportCommand):
 
     help = 'Импортирует данные из CSV/JSON с возможностью выбора формата'
 
-    files: Dict[str, Type[models.Model]] = {
+    files: dict[str, type[models.Model]] = {
         'ingredients.csv': Ingredient,
         'tags.csv': Tag,
         'ingredients.json': Ingredient,
@@ -26,12 +26,10 @@ class Command(BaseImportCommand):
             '--format',
             choices=['json', 'csv', 'all'],
             default='all',
-            help='Формат файлов для импорта: json, csv, all (по умолчанию)'
+            help=('Формат файлов для импорта: json, csv, all (по умолчанию)'),
         )
         parser.add_argument(
-            '--files',
-            nargs='+',
-            help='Список конкретных файлов для импорта'
+            '--files', nargs='+', help='Список конкретных файлов для импорта'
         )
 
     def handle(self, *args, **options):
@@ -50,19 +48,18 @@ class Command(BaseImportCommand):
                     raise TypeError('Данные должны быть списком объектов')
 
                 self.import_data(model, data)
-                self.stdout.write(
-                    self.style.SUCCESS(
-                        f'✅ Успешно импортировано {len(data)} записей '
-                        f'для {model.__name__} из {file_name}'
-                    )
+                msg = (
+                    f'✅ Успешно импортировано {len(data)} записей '
+                    f'для {model.__name__} из {file_name}'
                 )
+                self.stdout.write(self.style.SUCCESS(msg))
 
             except Exception as e:
                 raise CommandError(
                     f'⛔ Ошибка при обработке {file_name}: {e}'
                 ) from e
 
-    def get_files_to_process(self, options) -> Dict[str, Type[models.Model]]:
+    def get_files_to_process(self, options) -> dict[str, type[models.Model]]:
         """Возвращает список файлов для обработки на основе параметров."""
         selected_files = {}
 
@@ -71,18 +68,17 @@ class Command(BaseImportCommand):
                 if file_name in self.files:
                     selected_files[file_name] = self.files[file_name]
                 else:
-                    self.stdout.write(self.style.WARNING(
+                    warning = (
                         f'⚠️ Файл "{file_name}" не найден в списке доступных.'
-                    ))
+                    )
+                    self.stdout.write(self.style.WARNING(warning))
             return selected_files
 
         file_format = options['format']
         for file_name, model in self.files.items():
-            if file_format == 'all':
-                selected_files[file_name] = model
-            elif file_format == 'json' and file_name.endswith('.json'):
-                selected_files[file_name] = model
-            elif file_format == 'csv' and file_name.endswith('.csv'):
+            is_json = file_format == 'json' and file_name.endswith('.json')
+            is_csv = file_format == 'csv' and file_name.endswith('.csv')
+            if file_format == 'all' or is_json or is_csv:
                 selected_files[file_name] = model
 
         return selected_files
